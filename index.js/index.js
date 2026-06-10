@@ -1,12 +1,12 @@
+require('dotenv').config();
 const { Pool } = require('pg');
 
-// Colocando os dados direto aqui para testar se funciona sem o .env
 const banco = new Pool({
-    user: 'postgres',
-    password: '050419', // <-- COLOQUE AQUI A MESMA SENHA QUE VOCÊ CRIOU NO POSTGRES
-    host: 'localhost',
-    port: 5432,
-    database: 'postgres'
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD, // <-- Protegido! Puxa do .env
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_DATABASE
 });
 
 async function testarSistema() {
