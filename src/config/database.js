@@ -1,30 +1,34 @@
-// src/config/database.js
 require('dotenv').config();
 const { Pool } = require('pg');
 
-// Cria a conexão usando as variáveis do arquivo .env
+const poolConfig = process.env.DATABASE_URL
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
+    }
+    : {
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        host: process.env.DB_HOST,
+        port: Number(process.env.DB_PORT) || 5432,
+        database: process.env.DB_DATABASE
+    };
+
 const pool = new Pool({
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    database: process.env.DB_DATABASE
+    ...poolConfig,
+    options: '-c timezone=America/Sao_Paulo',
+    max: 10,
+    idleTimeoutMillis: 30000
 });
 
-// Função para testar a conexão assim que o sistema iniciar
-const conectarBanco = async () => {
-    try {
-        const client = await pool.connect();
-        console.log('✅ Conectado ao PostgreSQL com sucesso (Módulo Isolado)!');
-        client.release(); // Libera o cliente de volta para o pool
-    } catch (error) {
-        console.error('❌ Erro ao conectar ao banco de dados:', error.message);
-        process.exit(1); // Fecha o sistema se não conseguir conectar
-    }
-};
+pool.on('error', (error) => {
+    console.error('Erro inesperado no PostgreSQL:', error.message);
+});
 
-// Exportamos o 'pool' para fazer consultas e a função de teste
-module.exports = {
-    pool,
-    conectarBanco
-};
+async function conectarBanco() {
+    const client = await pool.connect();
+    client.release();
+    console.log('Conectado ao PostgreSQL.');
+}
+
+module.exports = { pool, conectarBanco };

@@ -1,10 +1,13 @@
 {
   "name": "sistema-agenda-unhas",
   "version": "1.0.0",
-  "description": "",
+  "description": "API REST para gerenciamento de clientes, servicos e agendamentos de manicure.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "migrate": "node -e \"require('./src/config/migrations').executarMigracoes().then(() => process.exit()).catch(e => { console.error(e); process.exit(1); })\"",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",

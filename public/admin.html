@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#ffdce7">
+    <title>Admin | Nails by Karina</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="admin-body">
+    <section id="adminLogin" class="admin-login" hidden>
+        <form id="adminLoginForm" class="login-panel">
+            <a class="brand-lockup" href="/" aria-label="Nails by Karina">
+                <span class="brand-mark">K</span>
+                <span class="brand-text">
+                    <span class="brand-name">Nails by Karina</span>
+                    <span class="brand-subtitle">Acesso administrativo</span>
+                </span>
+            </a>
+            <label>
+                Senha do painel
+                <input id="adminToken" type="password" autocomplete="current-password" required>
+            </label>
+            <button class="primary-button" type="submit">Entrar</button>
+        </form>
+    </section>
+    <header class="topbar">
+        <a class="ghost-button nav-admin" href="/" aria-label="Abrir site publico">Site</a>
+        <a class="brand-lockup" href="/admin" aria-label="Nails by Karina">
+            <span class="brand-mark">K</span>
+            <span class="brand-text">
+                <span class="brand-name">Nails by Karina</span>
+                <span class="brand-subtitle">Agenda de atendimentos</span>
+            </span>
+        </a>
+        <div class="date-control">
+            <button class="icon-button" id="prevDay" type="button" title="Dia anterior" aria-label="Dia anterior">&lt;</button>
+            <input id="selectedDate" type="date" aria-label="Data da agenda">
+            <button class="icon-button" id="nextDay" type="button" title="Proximo dia" aria-label="Proximo dia">&gt;</button>
+        </div>
+    </header>
+
+    <nav class="mobile-tabs" aria-label="Atalhos do painel">
+        <a href="#agenda">Agenda</a>
+        <a href="#novo-horario">Agendar</a>
+        <a href="#cliente">Cliente</a>
+        <a href="#servico">Servico</a>
+    </nav>
+
+    <main class="layout">
+        <section class="panel agenda-panel" id="agenda">
+            <div class="section-head">
+                <div>
+                    <h2>Agenda do dia</h2>
+                    <p id="dayLabel">Carregando...</p>
+                </div>
+                <button id="refreshButton" class="ghost-button" type="button">Atualizar</button>
+            </div>
+            <div class="summary-grid" id="summaryGrid">
+                <div><strong>0</strong><span>marcados</span></div>
+                <div><strong>0</strong><span>concluidos</span></div>
+                <div><strong>R$ 0,00</strong><span>faturado</span></div>
+                <div><strong>0</strong><span>cancelados</span></div>
+            </div>
+            <div id="appointmentsList" class="appointments-list" aria-live="polite"></div>
+        </section>
+
+        <aside class="side">
+            <section class="panel" id="novo-horario">
+                <div class="section-head">
+                    <div>
+                        <h2>Novo horario</h2>
+                        <p>Cadastre ou escolha uma cliente.</p>
+                    </div>
+                </div>
+                <form id="appointmentForm" class="form-grid">
+                    <label>
+                        Cliente
+                        <select id="appointmentClient" required></select>
+                    </label>
+                    <label>
+                        Servico
+                        <select id="appointmentService" required></select>
+                    </label>
+                    <label>
+                        Horario
+                        <select id="appointmentTime" required></select>
+                    </label>
+                    <label>
+                        Horario extra
+                        <input id="appointmentCustomTime" type="time" aria-label="Horario manual para encaixe">
+                    </label>
+                    <label class="wide">
+                        Observacoes
+                        <textarea id="appointmentNotes" rows="3" maxlength="1000" placeholder="Ex: francesinha, alongamento..."></textarea>
+                    </label>
+                    <button class="primary-button wide" type="submit">Agendar</button>
+                </form>
+            </section>
+
+            <section class="panel compact-panel" id="cliente">
+                <h2>Cliente</h2>
+                <form id="clientForm" class="form-grid">
+                    <label>
+                        Nome
+                        <input id="clientName" type="text" maxlength="120" autocomplete="name" required>
+                    </label>
+                    <label>
+                        Telefone
+                        <input id="clientPhone" type="tel" inputmode="tel" maxlength="30" autocomplete="tel" required>
+                    </label>
+                    <button class="secondary-button wide" type="submit">Salvar cliente</button>
+                </form>
+            </section>
+
+            <section class="panel compact-panel" id="servico">
+                <h2>Servico</h2>
+                <form id="serviceForm" class="form-grid">
+                    <label>
+                        Nome
+                        <input id="serviceName" type="text" maxlength="100" required>
+                    </label>
+                    <label>
+                        Duracao
+                        <input id="serviceDuration" type="number" inputmode="numeric" min="15" max="480" step="5" value="60" required>
+                    </label>
+                    <label>
+                        Preco
+                        <input id="servicePrice" type="number" inputmode="decimal" min="0" step="0.01" required>
+                    </label>
+                    <button class="secondary-button wide" type="submit">Salvar servico</button>
+                </form>
+            </section>
+        </aside>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="/app.js"></script>
+</body>
+</html>

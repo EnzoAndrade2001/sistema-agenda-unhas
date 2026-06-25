@@ -1,21 +1,36 @@
-// index.js
-const express = require('express');
-const { conectarBanco } = require('./src/config/database');
+const { createApp } = require('./src/app');
+const { conectarBanco, pool } = require('./src/config/database');
+const { executarMigracoes } = require('./src/config/migrations');
 
-const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
-// Permite que o Express entenda JSON enviado pelo frontend futuramente
-app.use(express.json());
+async function iniciarServidor() {
+    await conectarBanco();
+    await executarMigracoes();
 
-// Executa a função para testar a conexão com o banco
-conectarBanco();
+    const app = createApp();
+    const server = app.listen(PORT, () => {
+        console.log(`Servidor rodando em http://localhost:${PORT}`);
+    });
 
-// Rota de teste inicial para ter certeza que o servidor está online
-app.get('/', (req, res) => {
-    res.send('🚀 Backend da Agenda de Unhas rodando com sucesso!');
-});
+    const encerrar = () => {
+        server.close(async () => {
+            await pool.end();
+            process.exit(0);
+        });
+    };
 
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor rodando na porta ${PORT}`);
-});
+    process.on('SIGINT', encerrar);
+    process.on('SIGTERM', encerrar);
+
+    return server;
+}
+
+if (require.main === module) {
+    iniciarServidor().catch((error) => {
+        console.error('Erro ao iniciar o servidor:', error.message);
+        process.exit(1);
+    });
+}
+
+module.exports = { iniciarServidor };

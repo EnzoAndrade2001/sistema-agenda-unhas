@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#ffdce7">
+    <title>Nails by Karina</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="site-body">
+    <header class="site-hero">
+        <nav class="site-nav" aria-label="Navegacao principal">
+            <a class="brand-lockup public-brand" href="/" aria-label="Nails by Karina">
+                <span class="brand-mark">K</span>
+                <span class="brand-text">
+                    <span class="brand-name">Nails by Karina</span>
+                    <span class="brand-subtitle">Studio de unhas</span>
+                </span>
+            </a>
+            <a class="ghost-button nav-admin" href="/admin">Agenda</a>
+        </nav>
+        <section class="hero-content">
+            <p class="hero-kicker">Atendimento com hora marcada</p>
+            <h1>Escolha o cuidado ideal para suas unhas</h1>
+            <p>Veja servicos, valores e chame no WhatsApp para combinar o melhor horario.</p>
+            <a id="heroWhatsapp" class="primary-button hero-action" href="#servicos">Chamar no WhatsApp</a>
+        </section>
+    </header>
+
+    <main class="site-main">
+        <section class="services-section" id="servicos">
+            <div class="section-head services-head">
+                <div>
+                    <h2>Servicos</h2>
+                    <p>Valores pre definidos para agilizar o agendamento.</p>
+                </div>
+            </div>
+            <div id="publicServices" class="services-grid" aria-live="polite"></div>
+        </section>
+    </main>
+
+    <div class="mobile-cta">
+        <a id="bottomWhatsapp" class="primary-button" href="#servicos">Chamar no WhatsApp</a>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="/servicos.js"></script>
+</body>
+</html>
