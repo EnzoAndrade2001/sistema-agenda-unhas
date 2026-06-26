@@ -91,6 +91,24 @@
                         Horario extra
                         <input id="appointmentCustomTime" type="time" aria-label="Horario manual para encaixe">
                     </label>
+                    <label>
+                        Cobranca
+                        <select id="appointmentChargeType" required>
+                            <option value="pagar_na_hora">Pagar na hora</option>
+                            <option value="sinal_30">Sinal 30%</option>
+                            <option value="sinal_50">Sinal 50%</option>
+                            <option value="total">Total antecipado</option>
+                        </select>
+                    </label>
+                    <label>
+                        Metodo
+                        <select id="appointmentPaymentMethod" required>
+                            <option value="pix_manual">Pix manual</option>
+                            <option value="dinheiro">Dinheiro</option>
+                            <option value="pix_online">Pix online</option>
+                            <option value="cartao_online">Cartao online</option>
+                        </select>
+                    </label>
                     <label class="wide">
                         Observacoes
                         <textarea id="appointmentNotes" rows="3" maxlength="1000" placeholder="Ex: francesinha, alongamento..."></textarea>
@@ -161,6 +179,24 @@
                 <label>
                     Hora
                     <input id="editTime" type="time" required>
+                </label>
+                <label>
+                    Cobranca
+                    <select id="editChargeType" required>
+                        <option value="pagar_na_hora">Pagar na hora</option>
+                        <option value="sinal_30">Sinal 30%</option>
+                        <option value="sinal_50">Sinal 50%</option>
+                        <option value="total">Total antecipado</option>
+                    </select>
+                </label>
+                <label>
+                    Metodo
+                    <select id="editPaymentMethod" required>
+                        <option value="pix_manual">Pix manual</option>
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="pix_online">Pix online</option>
+                        <option value="cartao_online">Cartao online</option>
+                    </select>
                 </label>
                 <label class="wide">
                     Observacoes

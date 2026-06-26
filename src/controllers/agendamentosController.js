@@ -1,6 +1,7 @@
 const agendamentos = require('../models/agendamentos');
 const { HttpError } = require('../utils/httpError');
 const validacao = require('../utils/validation');
+const regrasPagamento = require('../utils/paymentRules');
 
 const statuses = ['agendado', 'confirmado', 'concluido', 'cancelado', 'faltou'];
 const pagamentos = ['pendente', 'parcial', 'pago', 'reembolsado', 'cancelado'];
@@ -45,7 +46,9 @@ async function criar(req, res) {
         inicio,
         observacoes: validacao.texto(req.body.observacoes, 'observacoes', { obrigatorio: false, max: 1000 }),
         permitir_conflito: booleano(req.body.permitir_conflito, 'permitir_conflito'),
-        motivo_encaixe: validacao.texto(req.body.motivo_encaixe, 'motivo_encaixe', { obrigatorio: false, max: 300 })
+        motivo_encaixe: validacao.texto(req.body.motivo_encaixe, 'motivo_encaixe', { obrigatorio: false, max: 300 }),
+        tipo_cobranca: regrasPagamento.validarTipoCobranca(req.body.tipo_cobranca || 'pagar_na_hora'),
+        metodo_pagamento_preferido: regrasPagamento.validarMetodoPreferido(req.body.metodo_pagamento_preferido || 'pix_manual')
     });
     res.status(201).json(agendamento);
 }
@@ -57,6 +60,10 @@ async function atualizar(req, res) {
     if (req.body.inicio !== undefined) campos.inicio = validacao.data(req.body.inicio);
     if (req.body.status !== undefined) campos.status = validarStatus(req.body.status);
     if (req.body.pagamento_status !== undefined) campos.pagamento_status = validarPagamentoStatus(req.body.pagamento_status);
+    if (req.body.tipo_cobranca !== undefined) campos.tipo_cobranca = regrasPagamento.validarTipoCobranca(req.body.tipo_cobranca);
+    if (req.body.metodo_pagamento_preferido !== undefined) {
+        campos.metodo_pagamento_preferido = regrasPagamento.validarMetodoPreferido(req.body.metodo_pagamento_preferido);
+    }
     if (req.body.forma_pagamento !== undefined) {
         campos.forma_pagamento = validacao.texto(req.body.forma_pagamento, 'forma_pagamento', { obrigatorio: false, max: 30 });
     }

@@ -262,6 +262,23 @@ textarea {
     margin-top: 8px;
 }
 
+.money-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 9px;
+    color: var(--brand-dark);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.money-row span {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff8fa;
+    padding: 6px 8px;
+}
+
 .pill {
     border-radius: 999px;
     background: var(--green-soft);

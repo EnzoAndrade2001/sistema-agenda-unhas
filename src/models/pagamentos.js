@@ -1,9 +1,10 @@
 const { pool } = require('../config/database');
 const agendamentos = require('./agendamentos');
 const { HttpError } = require('../utils/httpError');
+const regrasPagamento = require('../utils/paymentRules');
 
 const colunas = `
-    id, agendamento_id, provedor, metodo, status, valor::float AS valor,
+    id, agendamento_id, provedor, metodo, status, tipo, valor::float AS valor,
     mercado_pago_preference_id, mercado_pago_payment_id, checkout_url,
     sandbox_checkout_url, payload, criado_em, atualizado_em`;
 
@@ -24,11 +25,11 @@ async function buscarPorId(id, db = pool) {
     return result.rows[0] || null;
 }
 
-async function criarPendente({ agendamento_id, valor, provedor = 'manual', metodo = null }) {
+async function criarPendente({ agendamento_id, valor, provedor = 'manual', metodo = null, tipo = 'total' }) {
     const result = await pool.query(
-        `INSERT INTO pagamentos (agendamento_id, valor, provedor, metodo)
-         VALUES ($1, $2, $3, $4) RETURNING ${colunas}`,
-        [agendamento_id, valor, provedor, metodo]
+        `INSERT INTO pagamentos (agendamento_id, valor, provedor, metodo, tipo)
+         VALUES ($1, $2, $3, $4, $5) RETURNING ${colunas}`,
+        [agendamento_id, valor, provedor, metodo, tipo]
     );
     return result.rows[0];
 }
@@ -59,30 +60,32 @@ async function sincronizarAgendamento(db, agendamentoId) {
     const agendamento = await agendamentos.buscarPorId(agendamentoId, db);
     if (!agendamento) throw new HttpError(404, 'Agendamento nao encontrado.');
 
-    const pago = Number(result.rows[0].pago || 0);
+    const pago = regrasPagamento.arredondar(result.rows[0].pago || 0);
     let status = 'pendente';
     if (result.rows[0].reembolsado) status = 'reembolsado';
     else if (pago >= Number(agendamento.preco)) status = 'pago';
     else if (pago > 0) status = 'parcial';
+    const saldo = regrasPagamento.arredondar(Math.max(Number(agendamento.preco) - pago, 0));
 
     await db.query(
         `UPDATE agendamentos
-         SET pagamento_status=$1, valor_pago=$2, pago_em=$3, atualizado_em=NOW()
-         WHERE id=$4`,
-        [status, pago, status === 'pago' ? new Date() : null, agendamentoId]
+         SET pagamento_status=$1, valor_pago=$2, saldo_restante=$3, pago_em=$4, atualizado_em=NOW()
+         WHERE id=$5`,
+        [status, pago, saldo, status === 'pago' ? new Date() : null, agendamentoId]
     );
 }
 
-async function registrarManual({ agendamento_id, valor, metodo }) {
+async function registrarManual({ agendamento_id, valor, metodo, tipo = 'manual' }) {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
         const agendamento = await agendamentos.buscarPorId(agendamento_id, client);
         if (!agendamento) throw new HttpError(404, 'Agendamento nao encontrado.');
+        const metodoValidado = regrasPagamento.validarMetodoManual(metodo);
         const result = await client.query(
-            `INSERT INTO pagamentos (agendamento_id, provedor, metodo, status, valor)
-             VALUES ($1, 'manual', $2, 'pago', $3) RETURNING ${colunas}`,
-            [agendamento_id, metodo, valor]
+            `INSERT INTO pagamentos (agendamento_id, provedor, metodo, status, tipo, valor)
+             VALUES ($1, 'manual', $2, 'pago', $3, $4) RETURNING ${colunas}`,
+            [agendamento_id, metodoValidado, tipo, valor]
         );
         await sincronizarAgendamento(client, agendamento_id);
         await client.query('COMMIT');

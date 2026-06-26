@@ -19,6 +19,8 @@ const el = {
     appointmentService: document.querySelector('#appointmentService'),
     appointmentTime: document.querySelector('#appointmentTime'),
     appointmentCustomTime: document.querySelector('#appointmentCustomTime'),
+    appointmentChargeType: document.querySelector('#appointmentChargeType'),
+    appointmentPaymentMethod: document.querySelector('#appointmentPaymentMethod'),
     appointmentNotes: document.querySelector('#appointmentNotes'),
     clientForm: document.querySelector('#clientForm'),
     clientName: document.querySelector('#clientName'),
@@ -38,6 +40,8 @@ const el = {
     editService: document.querySelector('#editService'),
     editDate: document.querySelector('#editDate'),
     editTime: document.querySelector('#editTime'),
+    editChargeType: document.querySelector('#editChargeType'),
+    editPaymentMethod: document.querySelector('#editPaymentMethod'),
     editNotes: document.querySelector('#editNotes'),
     toast: document.querySelector('#toast')
 };
@@ -84,6 +88,24 @@ function timeInputValue(value) {
 function dateLong(dateText) {
     const date = new Date(`${dateText}T12:00:00`);
     return date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+}
+
+function chargeLabel(value) {
+    return ({
+        pagar_na_hora: 'pagar na hora',
+        sinal_30: 'sinal 30%',
+        sinal_50: 'sinal 50%',
+        total: 'total antecipado'
+    })[value] || value || 'pagar na hora';
+}
+
+function methodLabel(value) {
+    return ({
+        pix_online: 'Pix online',
+        cartao_online: 'cartao online',
+        pix_manual: 'Pix manual',
+        dinheiro: 'dinheiro'
+    })[value] || value || 'Pix manual';
 }
 
 function showToast(message) {
@@ -228,7 +250,14 @@ function renderAppointments() {
                     <span class="pill ${statusClass}">${escapeHtml(agendamento.status)}</span>
                     ${agendamento.encaixe ? '<span class="pill encaixe">encaixe</span>' : ''}
                     <span class="pill pagamento">${escapeHtml(agendamento.pagamento_status || 'pendente')}</span>
+                    <span class="pill">${escapeHtml(chargeLabel(agendamento.tipo_cobranca))}</span>
+                    <span class="pill">${escapeHtml(methodLabel(agendamento.metodo_pagamento_preferido))}</span>
                     <span class="pill">${time(agendamento.inicio)} as ${time(agendamento.fim)}</span>
+                </div>
+                <div class="money-row">
+                    <span>Sinal: ${currency(agendamento.valor_sinal)}</span>
+                    <span>Pago: ${currency(agendamento.valor_pago)}</span>
+                    <span>Falta: ${currency(agendamento.saldo_restante)}</span>
                 </div>
             </div>
         `;
@@ -284,6 +313,8 @@ function openEdit(agendamento) {
     el.editService.value = agendamento.servico_id;
     el.editDate.value = dateInputValue(agendamento.inicio);
     el.editTime.value = timeInputValue(agendamento.inicio);
+    el.editChargeType.value = agendamento.tipo_cobranca || 'pagar_na_hora';
+    el.editPaymentMethod.value = agendamento.metodo_pagamento_preferido || 'pix_manual';
     el.editNotes.value = agendamento.observacoes || '';
     el.editDialog.hidden = false;
     document.body.classList.add('modal-open');
@@ -300,6 +331,8 @@ function editBody(extra = {}) {
         cliente_id: el.editClient.value,
         servico_id: el.editService.value,
         inicio: `${el.editDate.value}T${el.editTime.value}:00-03:00`,
+        tipo_cobranca: el.editChargeType.value,
+        metodo_pagamento_preferido: el.editPaymentMethod.value,
         observacoes: el.editNotes.value,
         ...extra
     };
@@ -410,6 +443,8 @@ el.appointmentForm.addEventListener('submit', async (event) => {
         cliente_id: el.appointmentClient.value,
         servico_id: el.appointmentService.value,
         inicio: selectedStart(),
+        tipo_cobranca: el.appointmentChargeType.value,
+        metodo_pagamento_preferido: el.appointmentPaymentMethod.value,
         observacoes: el.appointmentNotes.value
     };
     try {

@@ -3,12 +3,13 @@ const pagamentos = require('../models/pagamentos');
 const mercadoPago = require('../services/mercadoPago');
 const { HttpError } = require('../utils/httpError');
 const validacao = require('../utils/validation');
+const regrasPagamento = require('../utils/paymentRules');
 
-const metodos = ['dinheiro', 'pix', 'cartao', 'mercado_pago', 'outro'];
+const metodosOnline = ['pix_online', 'cartao_online'];
 
-function validarMetodo(value) {
+function validarMetodoOnline(value = 'pix_online') {
     const metodo = validacao.texto(value, 'metodo', { max: 30 });
-    if (!metodos.includes(metodo)) throw new HttpError(400, `Metodo invalido. Use: ${metodos.join(', ')}.`);
+    if (!metodosOnline.includes(metodo)) throw new HttpError(400, `Metodo online invalido. Use: ${metodosOnline.join(', ')}.`);
     return metodo;
 }
 
@@ -29,7 +30,8 @@ async function registrarManual(req, res) {
     const pagamento = await pagamentos.registrarManual({
         agendamento_id: agendamentoId,
         valor: validacao.dinheiro(req.body.valor, 'valor'),
-        metodo: validarMetodo(req.body.metodo || 'dinheiro')
+        metodo: regrasPagamento.validarMetodoManual(req.body.metodo || 'dinheiro'),
+        tipo: regrasPagamento.validarTipoPagamento(req.body.tipo || 'manual')
     });
     res.status(201).json(pagamento);
 }
@@ -44,12 +46,17 @@ async function criarMercadoPago(req, res) {
     if (['cancelado', 'faltou'].includes(agendamento.status)) {
         throw new HttpError(409, 'Nao e possivel cobrar um agendamento cancelado ou com falta.');
     }
-    const valor = req.body.valor !== undefined ? validacao.dinheiro(req.body.valor, 'valor') : agendamento.preco;
+    const metodo = validarMetodoOnline(req.body.metodo || agendamento.metodo_pagamento_preferido || 'pix_online');
+    const tipo = regrasPagamento.validarTipoPagamento(req.body.tipo || (agendamento.tipo_cobranca === 'total' ? 'total' : 'sinal'));
+    const valorPadrao = tipo === 'sinal' ? agendamento.valor_sinal : agendamento.preco;
+    const valor = req.body.valor !== undefined ? validacao.dinheiro(req.body.valor, 'valor') : valorPadrao;
+    if (valor <= 0) throw new HttpError(400, 'Valor de cobranca deve ser maior que zero.');
     const pagamento = await pagamentos.criarPendente({
         agendamento_id: agendamentoId,
         valor,
         provedor: 'mercado_pago',
-        metodo: 'mercado_pago'
+        metodo,
+        tipo
     });
     const preference = await mercadoPago.criarPreferencia({ agendamento, pagamento });
     const atualizado = await pagamentos.atualizar(pagamento.id, {

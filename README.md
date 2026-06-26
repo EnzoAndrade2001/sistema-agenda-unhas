@@ -61,9 +61,16 @@ POST /api/agendamentos
   "cliente_id": 1,
   "servico_id": 1,
   "inicio": "2026-06-25T14:00:00-03:00",
+  "tipo_cobranca": "sinal_30",
+  "metodo_pagamento_preferido": "pix_online",
   "observacoes": "Francesinha"
 }
 ```
+
+Tipos de cobranca aceitos: `sinal_30`, `sinal_50`, `total` e
+`pagar_na_hora`. Metodos aceitos: `pix_online`, `cartao_online`,
+`pix_manual` e `dinheiro`. Cartao e Pix online nao sao permitidos na opcao
+`pagar_na_hora`; dinheiro e usado apenas para pagamento presencial.
 
 ```json
 POST /api/pagamentos/manual

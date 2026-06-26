@@ -1,11 +1,14 @@
 const { pool } = require('../config/database');
 const { HttpError } = require('../utils/httpError');
+const regrasPagamento = require('../utils/paymentRules');
 
 const selectCompleto = `
     SELECT a.id, a.cliente_id, c.nome AS cliente_nome, c.telefone AS cliente_telefone,
            a.servico_id, s.nome AS servico_nome, a.inicio, a.fim,
            a.preco::float AS preco, a.status, a.pagamento_status, a.forma_pagamento,
-           a.valor_pago::float AS valor_pago, a.confirmado_em, a.pago_em,
+           a.valor_pago::float AS valor_pago, a.tipo_cobranca, a.percentual_sinal,
+           a.valor_sinal::float AS valor_sinal, a.saldo_restante::float AS saldo_restante,
+           a.metodo_pagamento_preferido, a.confirmado_em, a.pago_em,
            a.encaixe, a.motivo_encaixe,
            a.observacoes, a.criado_em, a.atualizado_em
     FROM agendamentos a
@@ -93,18 +96,28 @@ async function validarConflito(db, inicio, fim, ignorarId = null, permitirConfli
     return result.rows[0].agendamento || null;
 }
 
-async function criar({ cliente_id, servico_id, inicio, observacoes, permitir_conflito, motivo_encaixe }) {
+async function criar({
+    cliente_id, servico_id, inicio, observacoes, permitir_conflito, motivo_encaixe,
+    tipo_cobranca = 'pagar_na_hora', metodo_pagamento_preferido = 'pix_manual'
+}) {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
         const servico = await obterServicoEValidarCliente(client, cliente_id, servico_id);
         const fim = new Date(inicio.getTime() + servico.duracao * 60000);
         const conflito = await validarConflito(client, inicio, fim, null, permitir_conflito);
+        const combinacao = regrasPagamento.validarCombinacao(tipo_cobranca, metodo_pagamento_preferido);
+        const cobranca = regrasPagamento.calcularCobranca(servico.preco, tipo_cobranca);
         const result = await client.query(
             `INSERT INTO agendamentos
-             (cliente_id, servico_id, inicio, fim, preco, observacoes, encaixe, motivo_encaixe)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-            [cliente_id, servico_id, inicio, fim, servico.preco, observacoes, Boolean(conflito), motivo_encaixe]
+             (cliente_id, servico_id, inicio, fim, preco, observacoes, encaixe, motivo_encaixe,
+              tipo_cobranca, percentual_sinal, valor_sinal, saldo_restante, metodo_pagamento_preferido)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+            [
+                cliente_id, servico_id, inicio, fim, servico.preco, observacoes, Boolean(conflito), motivo_encaixe,
+                cobranca.tipo_cobranca, cobranca.percentual_sinal, cobranca.valor_sinal, cobranca.saldo_restante,
+                combinacao.metodo_pagamento_preferido
+            ]
         );
         await client.query('COMMIT');
         return buscarPorId(result.rows[0].id);
@@ -130,6 +143,13 @@ async function atualizar(id, campos) {
         const valorPago = campos.valor_pago ?? atual.valor_pago;
         const servico = await obterServicoEValidarCliente(client, clienteId, servicoId);
         const fim = new Date(inicio.getTime() + servico.duracao * 60000);
+        const tipoCobranca = campos.tipo_cobranca ?? atual.tipo_cobranca;
+        const metodoPreferido = campos.metodo_pagamento_preferido !== undefined
+            ? regrasPagamento.validarMetodoPreferido(campos.metodo_pagamento_preferido)
+            : atual.metodo_pagamento_preferido;
+        const combinacao = regrasPagamento.validarCombinacao(tipoCobranca, metodoPreferido);
+        const cobranca = regrasPagamento.calcularCobranca(servico.preco, tipoCobranca);
+        const saldoRestante = Math.max(Number(servico.preco) - Number(valorPago || 0), 0);
         let conflito = null;
         if (!['cancelado', 'faltou'].includes(status)) {
             conflito = await validarConflito(client, inicio, fim, id, campos.permitir_conflito);
@@ -138,7 +158,8 @@ async function atualizar(id, campos) {
             `UPDATE agendamentos SET cliente_id=$1, servico_id=$2, inicio=$3, fim=$4,
              preco=$5, status=$6, observacoes=$7, pagamento_status=$8, forma_pagamento=$9,
              valor_pago=$10, confirmado_em=$11, pago_em=$12, encaixe=$13, motivo_encaixe=$14,
-             atualizado_em=NOW() WHERE id=$15`,
+             tipo_cobranca=$15, percentual_sinal=$16, valor_sinal=$17, saldo_restante=$18,
+             metodo_pagamento_preferido=$19, atualizado_em=NOW() WHERE id=$20`,
             [
                 clienteId, servicoId, inicio, fim, servico.preco, status,
                 campos.observacoes !== undefined ? campos.observacoes : atual.observacoes,
@@ -153,6 +174,11 @@ async function atualizar(id, campos) {
                     : (pagamentoStatus === 'pago' && !atual.pago_em ? new Date() : atual.pago_em),
                 campos.encaixe !== undefined ? campos.encaixe : (Boolean(conflito) || atual.encaixe),
                 campos.motivo_encaixe !== undefined ? campos.motivo_encaixe : atual.motivo_encaixe,
+                cobranca.tipo_cobranca,
+                cobranca.percentual_sinal,
+                cobranca.valor_sinal,
+                regrasPagamento.arredondar(saldoRestante),
+                combinacao.metodo_pagamento_preferido,
                 id
             ]
         );

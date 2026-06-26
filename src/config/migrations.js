@@ -42,6 +42,13 @@ CREATE TABLE IF NOT EXISTS agendamentos (
         CHECK (pagamento_status IN ('pendente', 'parcial', 'pago', 'reembolsado', 'cancelado')),
     forma_pagamento VARCHAR(30),
     valor_pago NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (valor_pago >= 0),
+    tipo_cobranca VARCHAR(30) NOT NULL DEFAULT 'pagar_na_hora'
+        CHECK (tipo_cobranca IN ('sinal_30', 'sinal_50', 'total', 'pagar_na_hora')),
+    percentual_sinal INTEGER NOT NULL DEFAULT 0 CHECK (percentual_sinal IN (0, 30, 50, 100)),
+    valor_sinal NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (valor_sinal >= 0),
+    saldo_restante NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (saldo_restante >= 0),
+    metodo_pagamento_preferido VARCHAR(30) NOT NULL DEFAULT 'pix_manual'
+        CHECK (metodo_pagamento_preferido IN ('pix_online', 'cartao_online', 'pix_manual', 'dinheiro')),
     confirmado_em TIMESTAMPTZ,
     pago_em TIMESTAMPTZ,
     encaixe BOOLEAN NOT NULL DEFAULT FALSE,
@@ -55,6 +62,11 @@ CREATE TABLE IF NOT EXISTS agendamentos (
 ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS pagamento_status VARCHAR(20) NOT NULL DEFAULT 'pendente';
 ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS forma_pagamento VARCHAR(30);
 ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS valor_pago NUMERIC(10, 2) NOT NULL DEFAULT 0;
+ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS tipo_cobranca VARCHAR(30) NOT NULL DEFAULT 'pagar_na_hora';
+ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS percentual_sinal INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS valor_sinal NUMERIC(10, 2) NOT NULL DEFAULT 0;
+ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS saldo_restante NUMERIC(10, 2) NOT NULL DEFAULT 0;
+ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS metodo_pagamento_preferido VARCHAR(30) NOT NULL DEFAULT 'pix_manual';
 ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS confirmado_em TIMESTAMPTZ;
 ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS pago_em TIMESTAMPTZ;
 ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS encaixe BOOLEAN NOT NULL DEFAULT FALSE;
@@ -64,6 +76,10 @@ CREATE INDEX IF NOT EXISTS agendamentos_inicio_idx ON agendamentos (inicio);
 CREATE INDEX IF NOT EXISTS agendamentos_cliente_idx ON agendamentos (cliente_id);
 CREATE INDEX IF NOT EXISTS agendamentos_pagamento_status_idx ON agendamentos (pagamento_status);
 
+UPDATE agendamentos
+SET saldo_restante = GREATEST(preco - valor_pago, 0)
+WHERE saldo_restante = 0 AND valor_pago < preco;
+
 CREATE TABLE IF NOT EXISTS pagamentos (
     id BIGSERIAL PRIMARY KEY,
     agendamento_id BIGINT NOT NULL REFERENCES agendamentos(id) ON DELETE CASCADE,
@@ -71,6 +87,8 @@ CREATE TABLE IF NOT EXISTS pagamentos (
     metodo VARCHAR(30),
     status VARCHAR(20) NOT NULL DEFAULT 'pendente'
         CHECK (status IN ('pendente', 'parcial', 'pago', 'reembolsado', 'cancelado', 'falhou')),
+    tipo VARCHAR(30) NOT NULL DEFAULT 'total'
+        CHECK (tipo IN ('sinal', 'total', 'saldo', 'manual')),
     valor NUMERIC(10, 2) NOT NULL CHECK (valor >= 0),
     mercado_pago_preference_id VARCHAR(120),
     mercado_pago_payment_id VARCHAR(120),
@@ -80,6 +98,8 @@ CREATE TABLE IF NOT EXISTS pagamentos (
     criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE pagamentos ADD COLUMN IF NOT EXISTS tipo VARCHAR(30) NOT NULL DEFAULT 'total';
 
 CREATE INDEX IF NOT EXISTS pagamentos_agendamento_idx ON pagamentos (agendamento_id);
 CREATE UNIQUE INDEX IF NOT EXISTS pagamentos_mp_preference_idx

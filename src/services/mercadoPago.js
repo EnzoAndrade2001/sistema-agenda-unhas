@@ -37,16 +37,20 @@ function publicUrl(path) {
 }
 
 async function criarPreferencia({ agendamento, pagamento }) {
+    const tipo = pagamento.tipo === 'sinal' ? 'Sinal' : 'Pagamento';
     const body = {
         external_reference: `agendamento:${agendamento.id}:pagamento:${pagamento.id}`,
         items: [{
             id: String(agendamento.id),
-            title: `Horario Karina - ${agendamento.servico_nome}`,
+            title: `${tipo} Nails by Karina - ${agendamento.servico_nome}`,
             description: `Cliente: ${agendamento.cliente_nome}`,
             quantity: 1,
             currency_id: 'BRL',
             unit_price: Number(pagamento.valor)
         }],
+        payment_methods: {
+            installments: 1
+        },
         metadata: {
             agendamento_id: String(agendamento.id),
             pagamento_id: String(pagamento.id)
