@@ -44,6 +44,10 @@ const el = {
     editChargeType: document.querySelector('#editChargeType'),
     editPaymentMethod: document.querySelector('#editPaymentMethod'),
     editNotes: document.querySelector('#editNotes'),
+    editReminderDate: document.querySelector('#editReminderDate'),
+    editReminderDays: document.querySelector('#editReminderDays'),
+    editReminderNotes: document.querySelector('#editReminderNotes'),
+    editReminderDone: document.querySelector('#editReminderDone'),
     notificationButton: document.querySelector('#notificationButton'),
     notificationCount: document.querySelector('#notificationCount'),
     notificationPanel: document.querySelector('#notificationPanel'),
@@ -60,6 +64,13 @@ function today() {
 function addDays(dateText, amount) {
     const date = new Date(`${dateText}T12:00:00`);
     date.setDate(date.getDate() + amount);
+    return date.toISOString().slice(0, 10);
+}
+
+function addDaysFromDate(value, amount) {
+    const date = new Date(value);
+    date.setDate(date.getDate() + amount);
+    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
     return date.toISOString().slice(0, 10);
 }
 
@@ -270,6 +281,7 @@ function renderAppointments() {
                     <span class="pill pagamento">${escapeHtml(agendamento.pagamento_status || 'pendente')}</span>
                     <span class="pill">${escapeHtml(chargeLabel(agendamento.tipo_cobranca))}</span>
                     <span class="pill">${escapeHtml(methodLabel(agendamento.metodo_pagamento_preferido))}</span>
+                    ${agendamento.lembrete_retorno_em ? `<span class="pill reminder">retorno ${dateShort(agendamento.lembrete_retorno_em)}</span>` : ''}
                     <span class="pill">${time(agendamento.inicio)} as ${time(agendamento.fim)}</span>
                 </div>
                 <div class="money-row">
@@ -313,9 +325,24 @@ function renderNotifications() {
             <strong>${escapeHtml(lembrete.cliente_nome)}</strong>
             <span>${escapeHtml(lembrete.servico_nome)} - ${dateShort(lembrete.data_retorno)}</span>
             <small>${escapeHtml(reminderLabel(Number(lembrete.dias_restantes)))} · ${escapeHtml(lembrete.cliente_telefone)}</small>
+            ${lembrete.lembrete_retorno_observacoes ? `<small>${escapeHtml(lembrete.lembrete_retorno_observacoes)}</small>` : ''}
         `;
+        item.append(actionButton('Resolvido', 'secondary-button mini-button', () => resolveReminder(lembrete.agendamento_id)));
         return item;
     }));
+}
+
+async function resolveReminder(id) {
+    try {
+        await api(`/api/agendamentos/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ lembrete_retorno_concluido: true })
+        });
+        showToast('Lembrete resolvido.');
+        await loadDay();
+    } catch (error) {
+        showToast(error.message);
+    }
 }
 
 async function updateStatus(id, status) {
@@ -355,6 +382,10 @@ function openEdit(agendamento) {
     el.editChargeType.value = agendamento.tipo_cobranca || 'pagar_na_hora';
     el.editPaymentMethod.value = agendamento.metodo_pagamento_preferido || 'pix_manual';
     el.editNotes.value = agendamento.observacoes || '';
+    el.editReminderDate.value = agendamento.lembrete_retorno_em || '';
+    el.editReminderDays.value = '';
+    el.editReminderNotes.value = agendamento.lembrete_retorno_observacoes || '';
+    el.editReminderDone.checked = Boolean(agendamento.lembrete_retorno_concluido);
     el.editDialog.hidden = false;
     document.body.classList.add('modal-open');
 }
@@ -372,6 +403,9 @@ function editBody(extra = {}) {
         inicio: `${el.editDate.value}T${el.editTime.value}:00-03:00`,
         tipo_cobranca: el.editChargeType.value,
         metodo_pagamento_preferido: el.editPaymentMethod.value,
+        lembrete_retorno_em: el.editReminderDate.value || null,
+        lembrete_retorno_observacoes: el.editReminderNotes.value,
+        lembrete_retorno_concluido: el.editReminderDone.checked,
         observacoes: el.editNotes.value,
         ...extra
     };
@@ -604,6 +638,15 @@ if (el.closeEdit) {
 if (el.editDialog) {
     el.editDialog.addEventListener('click', (event) => {
         if (event.target === el.editDialog) closeEditDialog();
+    });
+}
+
+if (el.editReminderDays) {
+    el.editReminderDays.addEventListener('input', () => {
+        const days = Number(el.editReminderDays.value);
+        if (!Number.isInteger(days) || days < 1 || !el.editDate.value) return;
+        el.editReminderDate.value = addDaysFromDate(`${el.editDate.value}T12:00:00`, days);
+        el.editReminderDone.checked = false;
     });
 }
 

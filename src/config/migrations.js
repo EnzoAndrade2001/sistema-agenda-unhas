@@ -53,6 +53,9 @@ CREATE TABLE IF NOT EXISTS agendamentos (
     pago_em TIMESTAMPTZ,
     encaixe BOOLEAN NOT NULL DEFAULT FALSE,
     motivo_encaixe VARCHAR(300),
+    lembrete_retorno_em DATE,
+    lembrete_retorno_observacoes VARCHAR(300),
+    lembrete_retorno_concluido BOOLEAN NOT NULL DEFAULT FALSE,
     observacoes TEXT,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -71,10 +74,15 @@ ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS confirmado_em TIMESTAMPTZ;
 ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS pago_em TIMESTAMPTZ;
 ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS encaixe BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS motivo_encaixe VARCHAR(300);
+ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS lembrete_retorno_em DATE;
+ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS lembrete_retorno_observacoes VARCHAR(300);
+ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS lembrete_retorno_concluido BOOLEAN NOT NULL DEFAULT FALSE;
 
 CREATE INDEX IF NOT EXISTS agendamentos_inicio_idx ON agendamentos (inicio);
 CREATE INDEX IF NOT EXISTS agendamentos_cliente_idx ON agendamentos (cliente_id);
 CREATE INDEX IF NOT EXISTS agendamentos_pagamento_status_idx ON agendamentos (pagamento_status);
+CREATE INDEX IF NOT EXISTS agendamentos_lembrete_retorno_idx
+    ON agendamentos (lembrete_retorno_em) WHERE lembrete_retorno_em IS NOT NULL;
 
 UPDATE agendamentos
 SET saldo_restante = GREATEST(preco - valor_pago, 0)

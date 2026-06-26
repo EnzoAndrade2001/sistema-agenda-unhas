@@ -102,14 +102,16 @@ async function lembretesRetorno(req, res) {
         `SELECT a.id AS agendamento_id, a.inicio, a.fim, a.preco::float AS preco,
                 c.id AS cliente_id, c.nome AS cliente_nome, c.telefone AS cliente_telefone,
                 s.nome AS servico_nome,
-                (a.inicio::date + INTERVAL '15 days')::date AS data_retorno,
-                ((a.inicio::date + INTERVAL '15 days')::date - CURRENT_DATE)::int AS dias_restantes
+                a.lembrete_retorno_em::text AS data_retorno,
+                a.lembrete_retorno_observacoes,
+                (a.lembrete_retorno_em - CURRENT_DATE)::int AS dias_restantes
          FROM agendamentos a
          JOIN clientes c ON c.id = a.cliente_id
          JOIN servicos s ON s.id = a.servico_id
-         WHERE a.status = 'concluido'
-           AND (a.inicio::date + INTERVAL '15 days')::date BETWEEN CURRENT_DATE - INTERVAL '7 days'
-               AND CURRENT_DATE + INTERVAL '5 days'
+         WHERE a.lembrete_retorno_em IS NOT NULL
+           AND a.lembrete_retorno_concluido = FALSE
+           AND a.lembrete_retorno_em BETWEEN CURRENT_DATE - INTERVAL '30 days'
+               AND CURRENT_DATE + INTERVAL '7 days'
            AND NOT EXISTS (
                SELECT 1 FROM agendamentos futuro
                WHERE futuro.cliente_id = a.cliente_id

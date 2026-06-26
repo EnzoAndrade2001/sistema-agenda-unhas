@@ -10,6 +10,9 @@ const selectCompleto = `
            a.valor_sinal::float AS valor_sinal, a.saldo_restante::float AS saldo_restante,
            a.metodo_pagamento_preferido, a.confirmado_em, a.pago_em,
            a.encaixe, a.motivo_encaixe,
+           a.lembrete_retorno_em::text AS lembrete_retorno_em,
+           a.lembrete_retorno_observacoes,
+           a.lembrete_retorno_concluido,
            a.observacoes, a.criado_em, a.atualizado_em
     FROM agendamentos a
     JOIN clientes c ON c.id = a.cliente_id
@@ -98,6 +101,7 @@ async function validarConflito(db, inicio, fim, ignorarId = null, permitirConfli
 
 async function criar({
     cliente_id, servico_id, inicio, observacoes, permitir_conflito, motivo_encaixe,
+    lembrete_retorno_em, lembrete_retorno_observacoes,
     tipo_cobranca = 'pagar_na_hora', metodo_pagamento_preferido = 'pix_manual'
 }) {
     const client = await pool.connect();
@@ -111,10 +115,12 @@ async function criar({
         const result = await client.query(
             `INSERT INTO agendamentos
              (cliente_id, servico_id, inicio, fim, preco, observacoes, encaixe, motivo_encaixe,
+              lembrete_retorno_em, lembrete_retorno_observacoes,
               tipo_cobranca, percentual_sinal, valor_sinal, saldo_restante, metodo_pagamento_preferido)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::date, $10, $11, $12, $13, $14, $15) RETURNING id`,
             [
                 cliente_id, servico_id, inicio, fim, servico.preco, observacoes, Boolean(conflito), motivo_encaixe,
+                lembrete_retorno_em || null, lembrete_retorno_observacoes,
                 cobranca.tipo_cobranca, cobranca.percentual_sinal, cobranca.valor_sinal, cobranca.saldo_restante,
                 combinacao.metodo_pagamento_preferido
             ]
@@ -159,7 +165,9 @@ async function atualizar(id, campos) {
              preco=$5, status=$6, observacoes=$7, pagamento_status=$8, forma_pagamento=$9,
              valor_pago=$10, confirmado_em=$11, pago_em=$12, encaixe=$13, motivo_encaixe=$14,
              tipo_cobranca=$15, percentual_sinal=$16, valor_sinal=$17, saldo_restante=$18,
-             metodo_pagamento_preferido=$19, atualizado_em=NOW() WHERE id=$20`,
+             metodo_pagamento_preferido=$19, lembrete_retorno_em=$20::date,
+             lembrete_retorno_observacoes=$21, lembrete_retorno_concluido=$22,
+             atualizado_em=NOW() WHERE id=$23`,
             [
                 clienteId, servicoId, inicio, fim, servico.preco, status,
                 campos.observacoes !== undefined ? campos.observacoes : atual.observacoes,
@@ -179,6 +187,13 @@ async function atualizar(id, campos) {
                 cobranca.valor_sinal,
                 regrasPagamento.arredondar(saldoRestante),
                 combinacao.metodo_pagamento_preferido,
+                campos.lembrete_retorno_em !== undefined ? campos.lembrete_retorno_em : atual.lembrete_retorno_em,
+                campos.lembrete_retorno_observacoes !== undefined
+                    ? campos.lembrete_retorno_observacoes
+                    : atual.lembrete_retorno_observacoes,
+                campos.lembrete_retorno_concluido !== undefined
+                    ? campos.lembrete_retorno_concluido
+                    : atual.lembrete_retorno_concluido,
                 id
             ]
         );

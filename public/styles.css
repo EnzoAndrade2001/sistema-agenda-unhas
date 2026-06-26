@@ -304,6 +304,11 @@ textarea {
     color: #644d86;
 }
 
+.pill.reminder {
+    background: #fff2cc;
+    color: #7a5a00;
+}
+
 .actions {
     display: flex;
     gap: 7px;
@@ -363,6 +368,18 @@ label {
     color: var(--muted);
     font-size: 13px;
     font-weight: 700;
+}
+
+.checkbox-row {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 10px;
+    color: var(--brand-dark);
+}
+
+.checkbox-row input {
+    width: 18px;
+    height: 18px;
 }
 
 .wide {
@@ -614,6 +631,14 @@ label {
     border-radius: 8px;
     background: #fff8fa;
     padding: 10px;
+}
+
+.notification-item .mini-button {
+    min-height: 36px;
+    justify-self: start;
+    margin-top: 4px;
+    padding: 0 10px;
+    font-size: 12px;
 }
 
 .notification-item strong {

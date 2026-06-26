@@ -22,6 +22,19 @@ function booleano(value, campo) {
     return value;
 }
 
+function dataOpcional(value, campo) {
+    if (value === null || value === '') return null;
+    if (value === undefined) return undefined;
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        throw new HttpError(400, `O campo ${campo} deve estar no formato AAAA-MM-DD.`);
+    }
+    const parsed = new Date(`${value}T12:00:00Z`);
+    if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) {
+        throw new HttpError(400, `O campo ${campo} possui data invalida.`);
+    }
+    return value;
+}
+
 async function listar(req, res) {
     res.json(await agendamentos.listar({
         inicio: req.query.inicio ? validacao.data(req.query.inicio, 'inicio') : undefined,
@@ -47,6 +60,11 @@ async function criar(req, res) {
         observacoes: validacao.texto(req.body.observacoes, 'observacoes', { obrigatorio: false, max: 1000 }),
         permitir_conflito: booleano(req.body.permitir_conflito, 'permitir_conflito'),
         motivo_encaixe: validacao.texto(req.body.motivo_encaixe, 'motivo_encaixe', { obrigatorio: false, max: 300 }),
+        lembrete_retorno_em: dataOpcional(req.body.lembrete_retorno_em, 'lembrete_retorno_em'),
+        lembrete_retorno_observacoes: validacao.texto(req.body.lembrete_retorno_observacoes, 'lembrete_retorno_observacoes', {
+            obrigatorio: false,
+            max: 300
+        }),
         tipo_cobranca: regrasPagamento.validarTipoCobranca(req.body.tipo_cobranca || 'pagar_na_hora'),
         metodo_pagamento_preferido: regrasPagamento.validarMetodoPreferido(req.body.metodo_pagamento_preferido || 'pix_manual')
     });
@@ -72,6 +90,19 @@ async function atualizar(req, res) {
     if (req.body.encaixe !== undefined) campos.encaixe = booleano(req.body.encaixe, 'encaixe');
     if (req.body.motivo_encaixe !== undefined) {
         campos.motivo_encaixe = validacao.texto(req.body.motivo_encaixe, 'motivo_encaixe', { obrigatorio: false, max: 300 });
+    }
+    if (req.body.lembrete_retorno_em !== undefined) {
+        campos.lembrete_retorno_em = dataOpcional(req.body.lembrete_retorno_em, 'lembrete_retorno_em');
+    }
+    if (req.body.lembrete_retorno_observacoes !== undefined) {
+        campos.lembrete_retorno_observacoes = validacao.texto(
+            req.body.lembrete_retorno_observacoes,
+            'lembrete_retorno_observacoes',
+            { obrigatorio: false, max: 300 }
+        );
+    }
+    if (req.body.lembrete_retorno_concluido !== undefined) {
+        campos.lembrete_retorno_concluido = booleano(req.body.lembrete_retorno_concluido, 'lembrete_retorno_concluido');
     }
     if (req.body.observacoes !== undefined) {
         campos.observacoes = validacao.texto(req.body.observacoes, 'observacoes', { obrigatorio: false, max: 1000 });

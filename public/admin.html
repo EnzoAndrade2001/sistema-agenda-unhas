@@ -36,7 +36,7 @@
                 <div id="notificationPanel" class="notification-panel" hidden>
                     <div class="notification-head">
                         <strong>Retornos</strong>
-                        <span>15 dias</span>
+                        <span>agenda</span>
                     </div>
                     <div id="notificationList" class="notification-list"></div>
                 </div>
@@ -216,6 +216,22 @@
                 <label class="wide">
                     Observacoes
                     <textarea id="editNotes" rows="3" maxlength="1000"></textarea>
+                </label>
+                <label>
+                    Lembrar retorno em
+                    <input id="editReminderDate" type="date">
+                </label>
+                <label>
+                    Dias apos atendimento
+                    <input id="editReminderDays" type="number" inputmode="numeric" min="1" max="365" placeholder="Ex: 20">
+                </label>
+                <label class="wide">
+                    Observacao do lembrete
+                    <textarea id="editReminderNotes" rows="2" maxlength="300" placeholder="Ex: chamar cliente para manutencao"></textarea>
+                </label>
+                <label class="checkbox-row wide">
+                    <input id="editReminderDone" type="checkbox">
+                    Lembrete ja resolvido
                 </label>
                 <button class="primary-button wide" type="submit">Salvar alteracoes</button>
             </div>
