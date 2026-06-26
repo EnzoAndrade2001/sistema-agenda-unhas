@@ -1,0 +1,22 @@
+<svg width="900" height="1100" viewBox="0 0 900 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="1100" fill="#FFF0F4"/>
+  <rect x="42" y="42" width="816" height="1016" rx="64" fill="url(#bg2)"/>
+  <circle cx="196" cy="182" r="120" fill="#FFD4DE"/>
+  <circle cx="718" cy="882" r="146" fill="#FFDDE7"/>
+  <path d="M175 768C175 584 296 382 450 382C604 382 725 584 725 768V840H175V768Z" fill="#EFB7C8"/>
+  <rect x="210" y="252" width="102" height="395" rx="50" transform="rotate(-18 210 252)" fill="#FFFDFE"/>
+  <rect x="332" y="212" width="112" height="450" rx="56" transform="rotate(-7 332 212)" fill="#FFCAD9"/>
+  <rect x="457" y="212" width="112" height="450" rx="56" transform="rotate(7 457 212)" fill="#FFFDFE"/>
+  <rect x="591" y="252" width="102" height="395" rx="50" transform="rotate(18 591 252)" fill="#FFAFC5"/>
+  <path d="M312 170C312 118 354 76 406 76H494C546 76 588 118 588 170V246H312V170Z" fill="#F19CB6"/>
+  <path d="M320 424C372 460 522 460 576 424" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round"/>
+  <path d="M300 520C360 568 542 568 600 520" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
+  <rect x="206" y="878" width="488" height="110" rx="55" fill="#FFF9FB" fill-opacity="0.76"/>
+  <text x="450" y="944" text-anchor="middle" fill="#7B4350" font-size="48" font-family="Georgia, serif" font-style="italic">Alongamento</text>
+  <defs>
+    <linearGradient id="bg2" x1="86" y1="96" x2="798" y2="1030" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFDFE"/>
+      <stop offset="1" stop-color="#FFC9D8"/>
+    </linearGradient>
+  </defs>
+</svg>

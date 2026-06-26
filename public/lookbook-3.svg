@@ -1,0 +1,24 @@
+<svg width="900" height="1100" viewBox="0 0 900 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="1100" fill="#FFF6F8"/>
+  <rect x="46" y="46" width="808" height="1008" rx="58" fill="url(#bg3)"/>
+  <circle cx="716" cy="194" r="116" fill="#FFD8E2"/>
+  <circle cx="220" cy="872" r="136" fill="#FFE4EB"/>
+  <path d="M194 748C194 590 306 420 450 420C594 420 706 590 706 748V830H194V748Z" fill="#F4C0CF"/>
+  <rect x="232" y="316" width="92" height="300" rx="44" transform="rotate(-14 232 316)" fill="#FFFDFE"/>
+  <rect x="344" y="266" width="104" height="352" rx="50" transform="rotate(-6 344 266)" fill="#FFBFD1"/>
+  <rect x="458" y="266" width="104" height="352" rx="50" transform="rotate(6 458 266)" fill="#FFFDFE"/>
+  <rect x="576" y="316" width="92" height="300" rx="44" transform="rotate(14 576 316)" fill="#FFD9E5"/>
+  <path d="M316 226C316 176 356 136 406 136H494C544 136 584 176 584 226V296H316V226Z" fill="#EFA5BC"/>
+  <circle cx="378" cy="442" r="22" fill="#FFFFFF"/>
+  <circle cx="448" cy="500" r="18" fill="#FFFFFF"/>
+  <circle cx="518" cy="436" r="24" fill="#FFFFFF"/>
+  <circle cx="552" cy="548" r="16" fill="#FFFFFF"/>
+  <rect x="210" y="876" width="480" height="108" rx="54" fill="#FFF9FB" fill-opacity="0.75"/>
+  <text x="450" y="942" text-anchor="middle" fill="#7B4350" font-size="44" font-family="Georgia, serif" font-style="italic">Decoracao suave</text>
+  <defs>
+    <linearGradient id="bg3" x1="92" y1="102" x2="798" y2="1018" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFDFE"/>
+      <stop offset="1" stop-color="#FFD7E2"/>
+    </linearGradient>
+  </defs>
+</svg>

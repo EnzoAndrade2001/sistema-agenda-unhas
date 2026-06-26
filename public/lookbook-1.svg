@@ -1,0 +1,20 @@
+<svg width="900" height="1100" viewBox="0 0 900 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="1100" fill="#FFF4F7"/>
+  <rect x="50" y="50" width="800" height="1000" rx="56" fill="url(#bg1)"/>
+  <circle cx="730" cy="180" r="110" fill="#FFE1EA"/>
+  <circle cx="230" cy="860" r="130" fill="#FFD2DF"/>
+  <path d="M210 730C210 575 315 430 450 430C585 430 690 575 690 730V810H210V730Z" fill="#F7C7D3"/>
+  <rect x="245" y="345" width="95" height="255" rx="46" transform="rotate(-16 245 345)" fill="#FFF9FB"/>
+  <rect x="352" y="295" width="108" height="310" rx="52" transform="rotate(-8 352 295)" fill="#FFD9E5"/>
+  <rect x="470" y="295" width="108" height="310" rx="52" transform="rotate(8 470 295)" fill="#FFF9FB"/>
+  <rect x="586" y="345" width="95" height="255" rx="46" transform="rotate(16 586 345)" fill="#FFC2D4"/>
+  <path d="M308 282C308 228 348 188 402 188H417C457 188 489 220 489 260V334H308V282Z" fill="#F1B0C1"/>
+  <rect x="240" y="774" width="420" height="100" rx="50" fill="#FFF9FB" fill-opacity="0.72"/>
+  <text x="450" y="835" text-anchor="middle" fill="#7B4350" font-size="48" font-family="Georgia, serif" font-style="italic">Gel delicado</text>
+  <defs>
+    <linearGradient id="bg1" x1="100" y1="100" x2="800" y2="980" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFDFE"/>
+      <stop offset="1" stop-color="#FFD8E4"/>
+    </linearGradient>
+  </defs>
+</svg>

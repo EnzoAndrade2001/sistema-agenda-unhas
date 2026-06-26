@@ -1,10 +1,13 @@
-const CACHE_NAME = 'nails-by-karina-v4';
+const CACHE_NAME = 'nails-by-karina-v5';
 const STATIC_ASSETS = [
     '/',
     '/styles.css',
     '/servicos.js',
     '/manifest.webmanifest',
-    '/icon.svg'
+    '/icon.svg',
+    '/lookbook-1.svg',
+    '/lookbook-2.svg',
+    '/lookbook-3.svg'
 ];
 
 self.addEventListener('install', (event) => {
