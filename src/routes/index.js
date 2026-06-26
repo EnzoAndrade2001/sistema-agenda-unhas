@@ -38,6 +38,8 @@ router.post('/webhooks/mercado-pago', pagamentos.webhookMercadoPago);
 
 router.get('/publico', sistema.infoPublica);
 router.get('/disponibilidade', sistema.disponibilidade);
+router.get('/disponibilidade/grade', sistema.gradeDisponibilidade);
+router.get('/lembretes/retorno', adminAuth.exigirAdmin, sistema.lembretesRetorno);
 router.get('/resumo', adminAuth.exigirAdmin, sistema.resumo);
 router.get('/configuracoes', adminAuth.exigirAdmin, sistema.buscarConfiguracoes);
 router.patch('/configuracoes', adminAuth.exigirAdmin, sistema.atualizarConfiguracoes);

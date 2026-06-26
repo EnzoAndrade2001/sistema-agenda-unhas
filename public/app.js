@@ -3,6 +3,7 @@ const state = {
     servicos: [],
     agendamentos: [],
     resumo: null,
+    lembretes: [],
     adminProtegido: false
 };
 
@@ -43,6 +44,10 @@ const el = {
     editChargeType: document.querySelector('#editChargeType'),
     editPaymentMethod: document.querySelector('#editPaymentMethod'),
     editNotes: document.querySelector('#editNotes'),
+    notificationButton: document.querySelector('#notificationButton'),
+    notificationCount: document.querySelector('#notificationCount'),
+    notificationPanel: document.querySelector('#notificationPanel'),
+    notificationList: document.querySelector('#notificationList'),
     toast: document.querySelector('#toast')
 };
 
@@ -88,6 +93,19 @@ function timeInputValue(value) {
 function dateLong(dateText) {
     const date = new Date(`${dateText}T12:00:00`);
     return date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+}
+
+function dateShort(value) {
+    const date = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+        ? new Date(`${value}T12:00:00`)
+        : new Date(value);
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+}
+
+function reminderLabel(days) {
+    if (days < 0) return `${Math.abs(days)} dia(s) atrasado`;
+    if (days === 0) return 'retorno hoje';
+    return `em ${days} dia(s)`;
 }
 
 function chargeLabel(value) {
@@ -279,6 +297,27 @@ function renderAppointments() {
     }));
 }
 
+function renderNotifications() {
+    if (!el.notificationButton || !el.notificationCount || !el.notificationList) return;
+    const count = state.lembretes.length;
+    el.notificationCount.textContent = count;
+    el.notificationButton.classList.toggle('has-alerts', count > 0);
+    if (!count) {
+        el.notificationList.innerHTML = '<div class="notification-empty">Nenhum retorno pendente.</div>';
+        return;
+    }
+    el.notificationList.replaceChildren(...state.lembretes.map((lembrete) => {
+        const item = document.createElement('article');
+        item.className = 'notification-item';
+        item.innerHTML = `
+            <strong>${escapeHtml(lembrete.cliente_nome)}</strong>
+            <span>${escapeHtml(lembrete.servico_nome)} - ${dateShort(lembrete.data_retorno)}</span>
+            <small>${escapeHtml(reminderLabel(Number(lembrete.dias_restantes)))} · ${escapeHtml(lembrete.cliente_telefone)}</small>
+        `;
+        return item;
+    }));
+}
+
 async function updateStatus(id, status) {
     try {
         await api(`/api/agendamentos/${id}`, {
@@ -379,14 +418,17 @@ async function handleEditSubmit(event) {
 
 async function loadDay() {
     const date = el.selectedDate.value;
-    const [agendamentos, resumo] = await Promise.all([
+    const [agendamentos, resumo, lembretes] = await Promise.all([
         api(`/api/agendamentos?inicio=${encodeURIComponent(startOfDay(date))}&fim=${encodeURIComponent(nextDayStart(date))}`),
-        api(`/api/resumo?data=${date}`)
+        api(`/api/resumo?data=${date}`),
+        api('/api/lembretes/retorno')
     ]);
     state.agendamentos = agendamentos;
     state.resumo = resumo;
+    state.lembretes = lembretes;
     renderSummary();
     renderAppointments();
+    renderNotifications();
     await loadTimes();
 }
 
@@ -562,6 +604,24 @@ if (el.closeEdit) {
 if (el.editDialog) {
     el.editDialog.addEventListener('click', (event) => {
         if (event.target === el.editDialog) closeEditDialog();
+    });
+}
+
+if (el.notificationButton && el.notificationPanel) {
+    el.notificationButton.addEventListener('click', () => {
+        const willOpen = el.notificationPanel.hidden;
+        el.notificationPanel.hidden = !willOpen;
+        el.notificationButton.setAttribute('aria-expanded', String(willOpen));
+    });
+    document.addEventListener('click', (event) => {
+        if (
+            !el.notificationPanel.hidden
+            && !el.notificationPanel.contains(event.target)
+            && !el.notificationButton.contains(event.target)
+        ) {
+            el.notificationPanel.hidden = true;
+            el.notificationButton.setAttribute('aria-expanded', 'false');
+        }
     });
 }
 

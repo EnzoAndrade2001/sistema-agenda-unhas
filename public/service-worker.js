@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nails-by-karina-v2';
+const CACHE_NAME = 'nails-by-karina-v3';
 const STATIC_ASSETS = [
     '/',
     '/styles.css',

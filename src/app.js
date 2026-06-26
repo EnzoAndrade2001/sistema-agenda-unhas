@@ -28,7 +28,8 @@ function createApp() {
     app.get('/api', (req, res) => res.json({
         endpoints: [
             '/api/clientes', '/api/servicos', '/api/agendamentos',
-            '/api/bloqueios', '/api/disponibilidade', '/api/resumo', '/api/configuracoes'
+            '/api/bloqueios', '/api/disponibilidade', '/api/disponibilidade/grade',
+            '/api/lembretes/retorno', '/api/resumo', '/api/configuracoes'
         ]
     }));
     app.use('/api', routes);

@@ -7,11 +7,25 @@ const el = {
     services: document.querySelector('#publicServices'),
     heroWhatsapp: document.querySelector('#heroWhatsapp'),
     bottomWhatsapp: document.querySelector('#bottomWhatsapp'),
+    availabilityForm: document.querySelector('#availabilityForm'),
+    availabilityDate: document.querySelector('#availabilityDate'),
+    availabilityService: document.querySelector('#availabilityService'),
+    availabilityGrid: document.querySelector('#availabilityGrid'),
     toast: document.querySelector('#toast')
 };
 
+function today() {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 10);
+}
+
 function currency(value) {
     return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function time(value) {
+    return new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
 function escapeHtml(value) {
@@ -38,12 +52,20 @@ async function api(path) {
     return data;
 }
 
-function whatsappUrl(servico = null) {
+function whatsappUrl(servico = null, horario = null) {
+    const horarioTexto = horario ? ` no horario das ${time(horario)}` : '';
     const message = servico
-        ? `Oi, Karina! Vim pelo site e quero marcar ${servico.nome}. Pode me passar os horarios disponiveis?`
+        ? `Oi, Karina! Vim pelo site e quero marcar ${servico.nome}${horarioTexto}. Pode confirmar disponibilidade?`
         : 'Oi, Karina! Vim pelo site e quero marcar um horario.';
     if (!state.whatsapp) return null;
     return `https://wa.me/${state.whatsapp}?text=${encodeURIComponent(message)}`;
+}
+
+function option(value, label) {
+    const node = document.createElement('option');
+    node.value = value;
+    node.textContent = label;
+    return node;
 }
 
 function renderHeroAction() {
@@ -100,6 +122,52 @@ function renderServices() {
     el.services.replaceChildren(...state.servicos.map(serviceCard));
 }
 
+function renderAvailabilitySelect() {
+    if (!el.availabilityService) return;
+    el.availabilityService.replaceChildren(
+        option('', state.servicos.length ? 'Selecione' : 'Nenhum servico ativo'),
+        ...state.servicos.map((servico) => option(servico.id, `${servico.nome} - ${currency(servico.preco)}`))
+    );
+}
+
+function selectedAvailabilityService() {
+    return state.servicos.find((servico) => String(servico.id) === String(el.availabilityService.value)) || null;
+}
+
+function renderAvailability(slots) {
+    if (!slots.length) {
+        el.availabilityGrid.innerHTML = '<div class="empty-state compact-empty">Nenhum horario para esta data.</div>';
+        return;
+    }
+    const servico = selectedAvailabilityService();
+    el.availabilityGrid.replaceChildren(...slots.map((slot) => {
+        const item = document.createElement(slot.disponivel && state.whatsapp ? 'a' : 'span');
+        item.className = `availability-slot ${slot.disponivel ? 'available' : 'unavailable'}`;
+        if (slot.disponivel && state.whatsapp) {
+            item.href = whatsappUrl(servico, slot.inicio);
+            item.target = '_blank';
+            item.rel = 'noopener';
+            item.setAttribute('aria-label', `Chamar no WhatsApp para ${time(slot.inicio)}`);
+        }
+        item.innerHTML = `
+            <strong>${time(slot.inicio)}</strong>
+            <small>${slot.disponivel ? 'Livre' : 'Indisponivel'}</small>
+        `;
+        return item;
+    }));
+}
+
+async function loadAvailability() {
+    if (!el.availabilityDate.value || !el.availabilityService.value) {
+        el.availabilityGrid.innerHTML = '<div class="empty-state compact-empty">Escolha data e servico para ver horarios.</div>';
+        return;
+    }
+    const slots = await api(
+        `/api/disponibilidade/grade?data=${el.availabilityDate.value}&servico_id=${el.availabilityService.value}`
+    );
+    renderAvailability(slots);
+}
+
 async function init() {
     try {
         const [info, servicos] = await Promise.all([
@@ -108,11 +176,26 @@ async function init() {
         ]);
         state.whatsapp = info.whatsapp;
         state.servicos = servicos;
+        el.availabilityDate.value = today();
         renderHeroAction();
         renderServices();
+        renderAvailabilitySelect();
+        if (state.servicos.length) {
+            el.availabilityService.value = state.servicos[0].id;
+            await loadAvailability();
+        }
     } catch (error) {
         showToast(error.message);
     }
+}
+
+if (el.availabilityForm) {
+    el.availabilityForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        loadAvailability().catch((error) => showToast(error.message));
+    });
+    el.availabilityDate.addEventListener('change', () => loadAvailability().catch((error) => showToast(error.message)));
+    el.availabilityService.addEventListener('change', () => loadAvailability().catch((error) => showToast(error.message)));
 }
 
 if ('serviceWorker' in navigator) {

@@ -54,6 +54,74 @@ async function disponibilidade(req, res) {
     res.json(result.rows.map((row) => row.inicio));
 }
 
+async function gradeDisponibilidade(req, res) {
+    const dia = dataLocal(req.query.data);
+    const servicoId = validacao.id(req.query.servico_id, 'servico_id');
+    const result = await pool.query(
+        `SELECT
+            slot.inicio,
+            slot.inicio + make_interval(mins => s.duracao_minutos) AS fim,
+            EXISTS (
+                SELECT 1 FROM agendamentos a
+                WHERE a.status NOT IN ('cancelado', 'faltou')
+                  AND a.inicio < slot.inicio + make_interval(mins => s.duracao_minutos)
+                  AND a.fim > slot.inicio
+            ) AS ocupado,
+            EXISTS (
+                SELECT 1 FROM bloqueios b
+                WHERE b.inicio < slot.inicio + make_interval(mins => s.duracao_minutos)
+                  AND b.fim > slot.inicio
+            ) AS bloqueado
+         FROM configuracoes c
+         JOIN servicos s ON s.id = $2 AND s.ativo
+         CROSS JOIN LATERAL generate_series(
+             ($1::date + c.horario_abertura)::timestamptz,
+             ($1::date + c.horario_fechamento)::timestamptz
+                 - make_interval(mins => s.duracao_minutos),
+             make_interval(mins => c.intervalo_minutos)
+         ) AS slot(inicio)
+         WHERE EXTRACT(ISODOW FROM $1::date)::smallint = ANY(c.dias_funcionamento)
+         ORDER BY slot.inicio`,
+        [dia, servicoId]
+    );
+    const agora = new Date();
+    res.json(result.rows.map((row) => {
+        const passado = new Date(row.inicio) < agora;
+        const motivo = passado ? 'passado' : (row.bloqueado ? 'bloqueado' : (row.ocupado ? 'ocupado' : null));
+        return {
+            inicio: row.inicio,
+            fim: row.fim,
+            disponivel: !motivo,
+            motivo
+        };
+    }));
+}
+
+async function lembretesRetorno(req, res) {
+    const result = await pool.query(
+        `SELECT a.id AS agendamento_id, a.inicio, a.fim, a.preco::float AS preco,
+                c.id AS cliente_id, c.nome AS cliente_nome, c.telefone AS cliente_telefone,
+                s.nome AS servico_nome,
+                (a.inicio::date + INTERVAL '15 days')::date AS data_retorno,
+                ((a.inicio::date + INTERVAL '15 days')::date - CURRENT_DATE)::int AS dias_restantes
+         FROM agendamentos a
+         JOIN clientes c ON c.id = a.cliente_id
+         JOIN servicos s ON s.id = a.servico_id
+         WHERE a.status = 'concluido'
+           AND (a.inicio::date + INTERVAL '15 days')::date BETWEEN CURRENT_DATE - INTERVAL '7 days'
+               AND CURRENT_DATE + INTERVAL '5 days'
+           AND NOT EXISTS (
+               SELECT 1 FROM agendamentos futuro
+               WHERE futuro.cliente_id = a.cliente_id
+                 AND futuro.status NOT IN ('cancelado', 'faltou')
+                 AND futuro.inicio > a.inicio
+           )
+         ORDER BY data_retorno, a.inicio
+         LIMIT 30`
+    );
+    res.json(result.rows);
+}
+
 async function resumo(req, res) {
     const dia = dataLocal(req.query.data || new Intl.DateTimeFormat('en-CA', {
         timeZone: 'America/Sao_Paulo'
@@ -107,4 +175,12 @@ async function atualizarConfiguracoes(req, res) {
     res.json(await configuracoes.atualizar(valores));
 }
 
-module.exports = { infoPublica, disponibilidade, resumo, buscarConfiguracoes, atualizarConfiguracoes };
+module.exports = {
+    infoPublica,
+    disponibilidade,
+    gradeDisponibilidade,
+    lembretesRetorno,
+    resumo,
+    buscarConfiguracoes,
+    atualizarConfiguracoes
+};

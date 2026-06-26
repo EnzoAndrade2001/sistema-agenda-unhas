@@ -492,6 +492,141 @@ label {
     text-decoration: none;
 }
 
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-self: start;
+}
+
+.notifications {
+    position: relative;
+}
+
+.notification-button {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--brand-dark);
+}
+
+.bell-shape {
+    position: relative;
+    width: 18px;
+    height: 20px;
+    border: 2px solid currentColor;
+    border-bottom: 0;
+    border-radius: 12px 12px 5px 5px;
+}
+
+.bell-shape::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: -5px;
+    width: 6px;
+    height: 5px;
+    border-radius: 999px 999px 0 0;
+    background: currentColor;
+    transform: translateX(-50%);
+}
+
+.bell-shape::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -5px;
+    width: 8px;
+    height: 3px;
+    border-radius: 999px;
+    background: currentColor;
+    transform: translateX(-50%);
+}
+
+.notification-button strong {
+    position: absolute;
+    right: -5px;
+    top: -6px;
+    min-width: 21px;
+    height: 21px;
+    display: grid;
+    place-items: center;
+    border: 2px solid #fff;
+    border-radius: 999px;
+    background: var(--muted);
+    color: #fff;
+    font-size: 11px;
+    line-height: 1;
+}
+
+.notification-button.has-alerts strong {
+    background: var(--rose);
+}
+
+.notification-panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    z-index: 50;
+    width: min(330px, calc(100vw - 28px));
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: var(--shadow);
+    padding: 12px;
+}
+
+.notification-head,
+.notification-item {
+    display: grid;
+    gap: 3px;
+}
+
+.notification-head {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    margin-bottom: 10px;
+    color: var(--brand-dark);
+}
+
+.notification-head span,
+.notification-item span,
+.notification-item small,
+.notification-empty {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.notification-list {
+    display: grid;
+    gap: 8px;
+    max-height: 320px;
+    overflow: auto;
+}
+
+.notification-item {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff8fa;
+    padding: 10px;
+}
+
+.notification-item strong {
+    color: var(--brand-dark);
+}
+
+.notification-empty {
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+}
+
 .hero-content {
     align-self: center;
     max-width: 760px;
@@ -537,9 +672,166 @@ label {
     padding: 0 clamp(16px, 5vw, 56px) max(48px, env(safe-area-inset-bottom));
 }
 
+.lookbook-section,
+.availability-section,
 .services-section {
     max-width: 1180px;
     margin: 0 auto;
+}
+
+.lookbook-section {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.55fr) minmax(0, 1fr);
+    gap: 18px;
+    align-items: end;
+    margin-bottom: 34px;
+}
+
+.lookbook-copy h2 {
+    max-width: 380px;
+    margin: 0;
+    color: var(--brand-dark);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(28px, 4vw, 44px);
+    font-style: italic;
+    line-height: 1;
+}
+
+.lookbook-grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.2fr 0.9fr;
+    gap: 12px;
+    align-items: end;
+}
+
+.lookbook-card {
+    position: relative;
+    min-height: 250px;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--rose-soft);
+    box-shadow: var(--shadow);
+}
+
+.lookbook-card.featured {
+    min-height: 320px;
+}
+
+.lookbook-card img {
+    width: 100%;
+    height: 100%;
+    min-height: inherit;
+    display: block;
+    object-fit: cover;
+}
+
+.lookbook-card figcaption {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--brand-dark);
+    padding: 9px 10px;
+    font-weight: 900;
+}
+
+.availability-section {
+    margin-bottom: 34px;
+}
+
+.availability-head {
+    margin-bottom: 14px;
+}
+
+.availability-form {
+    display: grid;
+    grid-template-columns: minmax(150px, 190px) minmax(220px, 1fr) auto;
+    gap: 10px;
+    align-items: end;
+    margin-bottom: 12px;
+}
+
+.availability-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.availability-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+}
+
+.dot.available {
+    background: #4f9f72;
+}
+
+.dot.unavailable {
+    background: #cc7890;
+}
+
+.availability-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+    gap: 8px;
+}
+
+.availability-slot {
+    min-height: 64px;
+    display: grid;
+    place-items: center;
+    gap: 2px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--brand-dark);
+    text-align: center;
+    text-decoration: none;
+}
+
+.availability-slot strong,
+.availability-slot small {
+    display: block;
+}
+
+.availability-slot small {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.availability-slot.available {
+    border-color: #b7ddc8;
+    background: #f2fbf6;
+}
+
+.availability-slot.available small {
+    color: #3d865e;
+}
+
+.availability-slot.unavailable {
+    background: #fff5f8;
+    color: #946172;
+    opacity: 0.72;
+}
+
+.compact-empty {
+    grid-column: 1 / -1;
+    min-height: 120px;
 }
 
 .services-head {
@@ -646,6 +938,17 @@ label {
 
     .topbar-spacer {
         display: none;
+    }
+
+    .topbar-actions {
+        justify-self: stretch;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .notification-panel {
+        left: auto;
+        right: 0;
     }
 
     .brand-lockup {
@@ -792,6 +1095,38 @@ label {
 
     .services-head {
         align-items: flex-start;
+    }
+
+    .lookbook-section {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        margin-bottom: 28px;
+    }
+
+    .lookbook-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .lookbook-card,
+    .lookbook-card.featured {
+        min-height: 230px;
+    }
+
+    .availability-section {
+        margin-bottom: 28px;
+    }
+
+    .availability-form {
+        grid-template-columns: 1fr;
+    }
+
+    .availability-form button {
+        width: 100%;
+    }
+
+    .availability-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .services-grid {

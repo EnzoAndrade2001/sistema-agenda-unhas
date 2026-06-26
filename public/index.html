@@ -28,6 +28,52 @@
     </header>
 
     <main class="site-main">
+        <section class="lookbook-section" aria-label="Fotos de trabalhos">
+            <div class="lookbook-copy">
+                <p class="hero-kicker">Trabalhos recentes</p>
+                <h2>Acabamento delicado, brilho e formatos bem cuidados</h2>
+            </div>
+            <div class="lookbook-grid">
+                <figure class="lookbook-card">
+                    <img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=900&q=80" alt="Unhas rosadas com acabamento brilhante" loading="lazy">
+                    <figcaption>Gel delicado</figcaption>
+                </figure>
+                <figure class="lookbook-card featured">
+                    <img src="https://images.unsplash.com/photo-1610992015732-2449b76344bc?auto=format&fit=crop&w=900&q=80" alt="Detalhe de esmaltes e unhas decoradas" loading="lazy">
+                    <figcaption>Alongamento e formato</figcaption>
+                </figure>
+                <figure class="lookbook-card">
+                    <img src="https://images.unsplash.com/photo-1607779097040-26e80aa78e66?auto=format&fit=crop&w=900&q=80" alt="Unhas decoradas em tons claros" loading="lazy">
+                    <figcaption>Decoracao suave</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <section class="availability-section" id="horarios">
+            <div class="section-head availability-head">
+                <div>
+                    <h2>Horarios</h2>
+                    <p>Veja os horarios livres e indisponiveis antes de chamar no WhatsApp.</p>
+                </div>
+            </div>
+            <form id="availabilityForm" class="availability-form">
+                <label>
+                    Data
+                    <input id="availabilityDate" type="date" required>
+                </label>
+                <label>
+                    Servico
+                    <select id="availabilityService" required></select>
+                </label>
+                <button class="secondary-button" type="submit">Ver horarios</button>
+            </form>
+            <div class="availability-legend" aria-hidden="true">
+                <span><i class="dot available"></i>Livre</span>
+                <span><i class="dot unavailable"></i>Indisponivel</span>
+            </div>
+            <div id="availabilityGrid" class="availability-grid" aria-live="polite"></div>
+        </section>
+
         <section class="services-section" id="servicos">
             <div class="section-head services-head">
                 <div>

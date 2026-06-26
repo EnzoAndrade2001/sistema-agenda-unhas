@@ -26,7 +26,22 @@
         </form>
     </section>
     <header class="topbar">
-        <a class="ghost-button nav-admin" href="/" aria-label="Abrir site publico">Site</a>
+        <div class="topbar-actions">
+            <a class="ghost-button nav-admin" href="/" aria-label="Abrir site publico">Site</a>
+            <div class="notifications">
+                <button id="notificationButton" class="notification-button" type="button" aria-label="Lembretes de retorno" aria-expanded="false">
+                    <span class="bell-shape" aria-hidden="true"></span>
+                    <strong id="notificationCount">0</strong>
+                </button>
+                <div id="notificationPanel" class="notification-panel" hidden>
+                    <div class="notification-head">
+                        <strong>Retornos</strong>
+                        <span>15 dias</span>
+                    </div>
+                    <div id="notificationList" class="notification-list"></div>
+                </div>
+            </div>
+        </div>
         <a class="brand-lockup" href="/admin" aria-label="Nails by Karina">
             <span class="brand-mark">K</span>
             <span class="brand-text">
