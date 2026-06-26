@@ -87,4 +87,5 @@ Para o Mercado Pago funcionar em producao, configure `MERCADO_PAGO_ACCESS_TOKEN`
 
 Para proteger o painel administrativo em producao, configure `ADMIN_TOKEN`.
 O site publico continua aberto, mas rotas administrativas passam a exigir essa
-senha no painel.
+senha no painel. Opcionalmente configure `ADMIN_PATH` com um caminho dificil de
+adivinhar, por exemplo `/painel-karina-2026`.

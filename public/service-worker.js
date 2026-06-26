@@ -1,10 +1,8 @@
-const CACHE_NAME = 'nails-by-karina-v1';
+const CACHE_NAME = 'nails-by-karina-v2';
 const STATIC_ASSETS = [
     '/',
-    '/admin',
     '/styles.css',
     '/servicos.js',
-    '/app.js',
     '/manifest.webmanifest',
     '/icon.svg'
 ];

@@ -5,20 +5,25 @@ const { HttpError } = require('./utils/httpError');
 
 function createApp() {
     const app = express();
+    const adminPath = process.env.ADMIN_PATH || '/admin';
     app.disable('x-powered-by');
     app.use(express.json({ limit: '100kb' }));
     app.use((req, res, next) => {
         res.set({
             'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || '*',
-            'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Token',
+            'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS'
         });
         if (req.method === 'OPTIONS') return res.status(204).end();
         next();
     });
 
+    app.get('/admin.html', (req, res) => res.status(404).send('Not found'));
+    app.get(adminPath, (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'admin.html')));
+    if (adminPath !== '/admin') {
+        app.get('/admin', (req, res) => res.status(404).send('Not found'));
+    }
     app.use(express.static(path.join(__dirname, '..', 'public')));
-    app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'admin.html')));
     app.get('/servicos', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
     app.get('/api', (req, res) => res.json({
         endpoints: [

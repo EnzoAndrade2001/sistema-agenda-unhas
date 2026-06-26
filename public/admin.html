@@ -135,6 +135,42 @@
         </aside>
     </main>
 
+    <section id="editDialog" class="modal" hidden>
+        <form id="editForm" class="modal-panel">
+            <div class="section-head">
+                <div>
+                    <h2>Editar horario</h2>
+                    <p>Altere servico, data, hora ou observacoes.</p>
+                </div>
+                <button id="closeEdit" class="icon-button" type="button" aria-label="Fechar">x</button>
+            </div>
+            <input id="editAppointmentId" type="hidden">
+            <div class="form-grid">
+                <label>
+                    Cliente
+                    <select id="editClient" required></select>
+                </label>
+                <label>
+                    Servico
+                    <select id="editService" required></select>
+                </label>
+                <label>
+                    Data
+                    <input id="editDate" type="date" required>
+                </label>
+                <label>
+                    Hora
+                    <input id="editTime" type="time" required>
+                </label>
+                <label class="wide">
+                    Observacoes
+                    <textarea id="editNotes" rows="3" maxlength="1000"></textarea>
+                </label>
+                <button class="primary-button wide" type="submit">Salvar alteracoes</button>
+            </div>
+        </form>
+    </section>
+
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script src="/app.js"></script>
 </body>

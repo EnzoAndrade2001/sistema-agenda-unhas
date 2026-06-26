@@ -9,6 +9,8 @@ const adminAuth = require('../middleware/adminAuth');
 const router = express.Router();
 
 router.get('/admin/status', adminAuth.statusAdmin);
+router.post('/admin/login', adminAuth.loginAdmin);
+router.post('/admin/logout', adminAuth.logoutAdmin);
 
 router.get('/clientes', adminAuth.exigirAdmin, clientes.listar);
 router.get('/clientes/:id', adminAuth.exigirAdmin, clientes.buscar);

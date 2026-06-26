@@ -3,8 +3,7 @@ const state = {
     servicos: [],
     agendamentos: [],
     resumo: null,
-    adminProtegido: false,
-    adminToken: localStorage.getItem('adminToken') || ''
+    adminProtegido: false
 };
 
 const el = {
@@ -31,6 +30,15 @@ const el = {
     adminLogin: document.querySelector('#adminLogin'),
     adminLoginForm: document.querySelector('#adminLoginForm'),
     adminToken: document.querySelector('#adminToken'),
+    editDialog: document.querySelector('#editDialog'),
+    editForm: document.querySelector('#editForm'),
+    closeEdit: document.querySelector('#closeEdit'),
+    editAppointmentId: document.querySelector('#editAppointmentId'),
+    editClient: document.querySelector('#editClient'),
+    editService: document.querySelector('#editService'),
+    editDate: document.querySelector('#editDate'),
+    editTime: document.querySelector('#editTime'),
+    editNotes: document.querySelector('#editNotes'),
     toast: document.querySelector('#toast')
 };
 
@@ -62,6 +70,17 @@ function time(value) {
     return new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
+function dateInputValue(value) {
+    const date = new Date(value);
+    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+    return date.toISOString().slice(0, 10);
+}
+
+function timeInputValue(value) {
+    const date = new Date(value);
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
 function dateLong(dateText) {
     const date = new Date(`${dateText}T12:00:00`);
     return date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
@@ -88,7 +107,6 @@ async function api(path, options = {}) {
     const response = await fetch(path, {
         headers: {
             'Content-Type': 'application/json',
-            ...(state.adminToken ? { 'X-Admin-Token': state.adminToken } : {}),
             ...(options.headers || {})
         },
         ...options
@@ -137,6 +155,17 @@ function renderSelects() {
             `${servico.nome} - ${servico.duracao_minutos} min - ${currency(servico.preco)}`
         ))
     );
+    if (el.editClient && el.editService) {
+        el.editClient.replaceChildren(
+            ...state.clientes.map((cliente) => option(cliente.id, `${cliente.nome} - ${cliente.telefone}`))
+        );
+        el.editService.replaceChildren(
+            ...state.servicos.map((servico) => option(
+                servico.id,
+                `${servico.nome} - ${servico.duracao_minutos} min - ${currency(servico.preco)}`
+            ))
+        );
+    }
 }
 
 async function loadTimes() {
@@ -207,10 +236,13 @@ function renderAppointments() {
         actions.className = 'actions';
         if (!['concluido', 'cancelado', 'faltou'].includes(agendamento.status)) {
             actions.append(
+                actionButton('Editar', 'secondary-button', () => openEdit(agendamento)),
                 actionButton('Confirmar', 'secondary-button', () => updateStatus(agendamento.id, 'confirmado')),
                 actionButton('Concluir', 'primary-button', () => updateStatus(agendamento.id, 'concluido')),
                 actionButton('Cancelar', 'danger-button', () => updateStatus(agendamento.id, 'cancelado'))
             );
+        } else {
+            actions.append(actionButton('Editar', 'secondary-button', () => openEdit(agendamento)));
         }
         actions.append(actionButton('Excluir', 'danger-button outline-danger', () => deleteAppointment(agendamento)));
         row.append(actions);
@@ -241,6 +273,73 @@ async function deleteAppointment(agendamento) {
         showToast('Horario excluido.');
         await loadDay();
     } catch (error) {
+        showToast(error.message);
+    }
+}
+
+function openEdit(agendamento) {
+    if (!el.editDialog) return;
+    el.editAppointmentId.value = agendamento.id;
+    el.editClient.value = agendamento.cliente_id;
+    el.editService.value = agendamento.servico_id;
+    el.editDate.value = dateInputValue(agendamento.inicio);
+    el.editTime.value = timeInputValue(agendamento.inicio);
+    el.editNotes.value = agendamento.observacoes || '';
+    el.editDialog.hidden = false;
+    document.body.classList.add('modal-open');
+}
+
+function closeEditDialog() {
+    if (!el.editDialog) return;
+    el.editDialog.hidden = true;
+    document.body.classList.remove('modal-open');
+}
+
+function editBody(extra = {}) {
+    return {
+        cliente_id: el.editClient.value,
+        servico_id: el.editService.value,
+        inicio: `${el.editDate.value}T${el.editTime.value}:00-03:00`,
+        observacoes: el.editNotes.value,
+        ...extra
+    };
+}
+
+async function saveEdit(extra = {}) {
+    await api(`/api/agendamentos/${el.editAppointmentId.value}`, {
+        method: 'PATCH',
+        body: JSON.stringify(editBody(extra))
+    });
+}
+
+async function handleEditSubmit(event) {
+    event.preventDefault();
+    try {
+        await saveEdit();
+        closeEditDialog();
+        showToast('Horario atualizado.');
+        await loadDay();
+    } catch (error) {
+        if (error.status === 409 && error.details.pode_confirmar_encaixe) {
+            const conflito = error.details.conflito;
+            const confirma = window.confirm(
+                `Esse novo horario conflita com ${conflito.cliente_nome} das ${time(conflito.inicio)} as ${time(conflito.fim)}.\n\nDeseja salvar como encaixe mesmo assim?`
+            );
+            if (!confirma) return;
+            try {
+                await saveEdit({
+                    permitir_conflito: true,
+                    encaixe: true,
+                    motivo_encaixe: 'Remarcado como encaixe no painel'
+                });
+                closeEditDialog();
+                showToast('Horario remarcado como encaixe.');
+                await loadDay();
+            } catch (confirmError) {
+                showToast(confirmError.message);
+            }
+            return;
+        }
         showToast(error.message);
     }
 }
@@ -280,7 +379,7 @@ async function refreshAll() {
 async function checkAdminAccess() {
     const status = await api('/api/admin/status');
     state.adminProtegido = status.protegido;
-    if (state.adminProtegido && !state.adminToken) {
+    if (state.adminProtegido && !status.autenticado) {
         showLogin();
         return false;
     }
@@ -401,18 +500,33 @@ el.serviceForm.addEventListener('submit', async (event) => {
 if (el.adminLoginForm) {
     el.adminLoginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        state.adminToken = el.adminToken.value.trim();
-        localStorage.setItem('adminToken', state.adminToken);
         try {
+            await api('/api/admin/login', {
+                method: 'POST',
+                body: JSON.stringify({ token: el.adminToken.value.trim() })
+            });
+            el.adminToken.value = '';
             await refreshAll();
             hideLogin();
             showToast('Acesso liberado.');
         } catch (error) {
-            localStorage.removeItem('adminToken');
-            state.adminToken = '';
             showLogin();
             showToast(error.message);
         }
+    });
+}
+
+if (el.editForm) {
+    el.editForm.addEventListener('submit', handleEditSubmit);
+}
+
+if (el.closeEdit) {
+    el.closeEdit.addEventListener('click', closeEditDialog);
+}
+
+if (el.editDialog) {
+    el.editDialog.addEventListener('click', (event) => {
+        if (event.target === el.editDialog) closeEditDialog();
     });
 }
 
