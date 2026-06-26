@@ -1,6 +1,6 @@
 const { pool } = require('../config/database');
 
-const colunas = 'id, nome, telefone, observacoes, ativo, criado_em, atualizado_em';
+const colunas = 'id, nome, telefone, email, observacoes, ativo, criado_em, atualizado_em';
 
 async function listar(busca, incluirInativos = false) {
     const values = [];
@@ -20,11 +20,16 @@ async function buscarPorId(id) {
     return result.rows[0] || null;
 }
 
-async function criar({ nome, telefone, observacoes }) {
+async function buscarPorTelefone(telefone) {
+    const result = await pool.query(`SELECT ${colunas} FROM clientes WHERE telefone = $1 AND ativo = TRUE`, [telefone]);
+    return result.rows[0] || null;
+}
+
+async function criar({ nome, telefone, email, observacoes }) {
     const result = await pool.query(
-        `INSERT INTO clientes (nome, telefone, observacoes)
-         VALUES ($1, $2, $3) RETURNING ${colunas}`,
-        [nome, telefone, observacoes]
+        `INSERT INTO clientes (nome, telefone, email, observacoes)
+         VALUES ($1, $2, $3, $4) RETURNING ${colunas}`,
+        [nome, telefone, email, observacoes]
     );
     return result.rows[0];
 }
@@ -42,4 +47,4 @@ async function atualizar(id, campos) {
     return result.rows[0] || null;
 }
 
-module.exports = { listar, buscarPorId, criar, atualizar };
+module.exports = { listar, buscarPorId, buscarPorTelefone, criar, atualizar };

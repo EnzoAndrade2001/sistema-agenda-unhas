@@ -74,6 +74,33 @@ async function criarPreferencia({ agendamento, pagamento }) {
     });
 }
 
+async function criarPagamentoPix({ agendamento, pagamento, payer }) {
+    const notificationUrl = publicUrl('/api/webhooks/mercado-pago');
+    const body = {
+        transaction_amount: Number(pagamento.valor),
+        description: `${pagamento.tipo === 'sinal' ? 'Sinal' : 'Pagamento'} Nails by Karina - ${agendamento.servico_nome}`,
+        payment_method_id: 'pix',
+        external_reference: `agendamento:${agendamento.id}:pagamento:${pagamento.id}`,
+        payer: {
+            email: payer.email,
+            first_name: payer.nome
+        },
+        metadata: {
+            agendamento_id: String(agendamento.id),
+            pagamento_id: String(pagamento.id)
+        }
+    };
+    if (notificationUrl && notificationUrl.startsWith('https://')) body.notification_url = notificationUrl;
+
+    return request('/v1/payments', {
+        method: 'POST',
+        headers: {
+            'X-Idempotency-Key': crypto.randomUUID()
+        },
+        body: JSON.stringify(body)
+    });
+}
+
 async function buscarPagamento(paymentId) {
     return request(`/v1/payments/${encodeURIComponent(paymentId)}`);
 }
@@ -109,4 +136,11 @@ function mapearStatus(status) {
     return mapa[status] || 'pendente';
 }
 
-module.exports = { estaConfigurado, criarPreferencia, buscarPagamento, validarAssinatura, mapearStatus };
+module.exports = {
+    estaConfigurado,
+    criarPreferencia,
+    criarPagamentoPix,
+    buscarPagamento,
+    validarAssinatura,
+    mapearStatus
+};

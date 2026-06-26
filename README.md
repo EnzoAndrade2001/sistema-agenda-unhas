@@ -26,10 +26,12 @@ As tabelas sao criadas automaticamente. Por padrao, o site publico fica em
 | GET | `/api/pagamentos?agendamento_id=1` | Listar pagamentos |
 | POST | `/api/pagamentos/manual` | Registrar pagamento manual |
 | POST | `/api/pagamentos/mercado-pago` | Criar link de pagamento Mercado Pago |
+| POST | `/api/publico/agendamentos` | Cliente cria reserva publica e pode gerar QR Pix |
 | POST | `/api/webhooks/mercado-pago` | Receber notificacoes do Mercado Pago |
 | GET/POST | `/api/bloqueios` | Consultar e criar bloqueios |
 | DELETE | `/api/bloqueios/:id` | Remover bloqueio |
 | GET | `/api/disponibilidade?data=2026-06-25&servico_id=1` | Horarios livres |
+| GET | `/api/disponibilidade/grade?data=2026-06-25&servico_id=1` | Horarios livres e indisponiveis |
 | GET | `/api/resumo?data=2026-06-25` | Resumo financeiro do dia |
 | GET/PATCH | `/api/configuracoes` | Expediente e intervalo da agenda |
 
@@ -77,7 +79,7 @@ POST /api/pagamentos/manual
 {
   "agendamento_id": 1,
   "valor": 45,
-  "metodo": "pix"
+  "metodo": "pix_manual"
 }
 ```
 
@@ -87,6 +89,24 @@ POST /api/pagamentos/mercado-pago
   "agendamento_id": 1
 }
 ```
+
+```json
+POST /api/publico/agendamentos
+{
+  "nome": "Maria",
+  "telefone": "(11) 99999-8888",
+  "email": "maria@email.com",
+  "servico_id": 1,
+  "inicio": "2026-06-25T14:00:00-03:00",
+  "tipo_cobranca": "sinal_30",
+  "metodo_pagamento_preferido": "pix_online"
+}
+```
+
+No fluxo publico, `pix_online` gera QR Code Pix via Mercado Pago. O retorno
+inclui `pagamento.pix.qr_code`, `pagamento.pix.qr_code_base64` e `ticket_url`.
+Se a cliente seguir pelo WhatsApp, a mensagem ja leva servico, data, horario,
+nome e telefone para o atendimento automatizado.
 
 Para o Mercado Pago funcionar em producao, configure `MERCADO_PAGO_ACCESS_TOKEN`,
 `PUBLIC_BASE_URL` com HTTPS e, se usar validacao de webhook,

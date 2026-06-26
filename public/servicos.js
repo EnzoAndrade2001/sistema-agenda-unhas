@@ -1,6 +1,7 @@
 const state = {
     whatsapp: null,
-    servicos: []
+    servicos: [],
+    selectedSlot: null
 };
 
 const el = {
@@ -11,6 +12,16 @@ const el = {
     availabilityDate: document.querySelector('#availabilityDate'),
     availabilityService: document.querySelector('#availabilityService'),
     availabilityGrid: document.querySelector('#availabilityGrid'),
+    bookingPanel: document.querySelector('#bookingPanel'),
+    bookingSummary: document.querySelector('#bookingSummary'),
+    bookingForm: document.querySelector('#bookingForm'),
+    bookingName: document.querySelector('#bookingName'),
+    bookingPhone: document.querySelector('#bookingPhone'),
+    bookingEmail: document.querySelector('#bookingEmail'),
+    bookingChargeType: document.querySelector('#bookingChargeType'),
+    bookingNotes: document.querySelector('#bookingNotes'),
+    bookingWhatsapp: document.querySelector('#bookingWhatsapp'),
+    paymentResult: document.querySelector('#paymentResult'),
     toast: document.querySelector('#toast')
 };
 
@@ -26,6 +37,10 @@ function currency(value) {
 
 function time(value) {
     return new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function dateLong(value) {
+    return new Date(value).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
 }
 
 function escapeHtml(value) {
@@ -45,17 +60,24 @@ function showToast(message) {
     showToast.timeout = setTimeout(() => el.toast.classList.remove('visible'), 3200);
 }
 
-async function api(path) {
-    const response = await fetch(path);
+async function api(path, options = {}) {
+    const response = await fetch(path, {
+        headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+        },
+        ...options
+    });
     const data = await response.json();
     if (!response.ok) throw new Error(data.erro || 'Nao foi possivel carregar.');
     return data;
 }
 
-function whatsappUrl(servico = null, horario = null) {
-    const horarioTexto = horario ? ` no horario das ${time(horario)}` : '';
+function whatsappUrl(servico = null, horario = null, cliente = null) {
+    const horarioTexto = horario ? ` no dia ${dateLong(horario)} as ${time(horario)}` : '';
+    const clienteTexto = cliente ? `\nNome: ${cliente.nome}\nTelefone: ${cliente.telefone}` : '';
     const message = servico
-        ? `Oi, Karina! Vim pelo site e quero marcar ${servico.nome}${horarioTexto}. Pode confirmar disponibilidade?`
+        ? `Oi, Karina! Vim pelo site e quero marcar ${servico.nome}${horarioTexto}. Pode confirmar disponibilidade?${clienteTexto}`
         : 'Oi, Karina! Vim pelo site e quero marcar um horario.';
     if (!state.whatsapp) return null;
     return `https://wa.me/${state.whatsapp}?text=${encodeURIComponent(message)}`;
@@ -134,6 +156,16 @@ function selectedAvailabilityService() {
     return state.servicos.find((servico) => String(servico.id) === String(el.availabilityService.value)) || null;
 }
 
+function selectSlot(slot) {
+    state.selectedSlot = slot;
+    const servico = selectedAvailabilityService();
+    el.bookingSummary.textContent = `${servico.nome} em ${dateLong(slot.inicio)} as ${time(slot.inicio)}.`;
+    el.bookingPanel.hidden = false;
+    el.paymentResult.hidden = true;
+    el.paymentResult.replaceChildren();
+    el.bookingPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function renderAvailability(slots) {
     if (!slots.length) {
         el.availabilityGrid.innerHTML = '<div class="empty-state compact-empty">Nenhum horario para esta data.</div>';
@@ -141,13 +173,12 @@ function renderAvailability(slots) {
     }
     const servico = selectedAvailabilityService();
     el.availabilityGrid.replaceChildren(...slots.map((slot) => {
-        const item = document.createElement(slot.disponivel && state.whatsapp ? 'a' : 'span');
+        const item = document.createElement(slot.disponivel ? 'button' : 'span');
         item.className = `availability-slot ${slot.disponivel ? 'available' : 'unavailable'}`;
-        if (slot.disponivel && state.whatsapp) {
-            item.href = whatsappUrl(servico, slot.inicio);
-            item.target = '_blank';
-            item.rel = 'noopener';
-            item.setAttribute('aria-label', `Chamar no WhatsApp para ${time(slot.inicio)}`);
+        if (slot.disponivel) {
+            item.type = 'button';
+            item.addEventListener('click', () => selectSlot(slot));
+            item.setAttribute('aria-label', `Reservar horario das ${time(slot.inicio)}`);
         }
         item.innerHTML = `
             <strong>${time(slot.inicio)}</strong>
@@ -166,6 +197,43 @@ async function loadAvailability() {
         `/api/disponibilidade/grade?data=${el.availabilityDate.value}&servico_id=${el.availabilityService.value}`
     );
     renderAvailability(slots);
+}
+
+function bookingPayload(metodo) {
+    if (!state.selectedSlot) throw new Error('Escolha um horario livre.');
+    return {
+        nome: el.bookingName.value,
+        telefone: el.bookingPhone.value,
+        email: el.bookingEmail.value,
+        servico_id: el.availabilityService.value,
+        inicio: state.selectedSlot.inicio,
+        tipo_cobranca: metodo === 'pix_online' ? el.bookingChargeType.value : 'pagar_na_hora',
+        metodo_pagamento_preferido: metodo,
+        observacoes: el.bookingNotes.value
+    };
+}
+
+function renderPayment(result) {
+    const pix = result.pagamento && result.pagamento.pix;
+    if (!pix || !pix.qr_code) {
+        showToast('Agendamento criado, mas o QR Pix nao retornou.');
+        return;
+    }
+    el.paymentResult.hidden = false;
+    el.paymentResult.innerHTML = `
+        <div>
+            <strong>QR Pix gerado</strong>
+            <p>Horario reservado. Pague pelo QR Code ou copie o codigo Pix.</p>
+        </div>
+        ${pix.qr_code_base64 ? `<img src="data:image/png;base64,${pix.qr_code_base64}" alt="QR Code Pix Mercado Pago">` : ''}
+        <textarea readonly rows="4">${escapeHtml(pix.qr_code)}</textarea>
+        <button class="secondary-button" type="button" data-copy-pix>Copiar Pix</button>
+    `;
+    const copyButton = el.paymentResult.querySelector('[data-copy-pix]');
+    copyButton.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(pix.qr_code);
+        showToast('Codigo Pix copiado.');
+    });
 }
 
 async function init() {
@@ -196,6 +264,41 @@ if (el.availabilityForm) {
     });
     el.availabilityDate.addEventListener('change', () => loadAvailability().catch((error) => showToast(error.message)));
     el.availabilityService.addEventListener('change', () => loadAvailability().catch((error) => showToast(error.message)));
+}
+
+if (el.bookingForm) {
+    el.bookingForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        try {
+            const result = await api('/api/publico/agendamentos', {
+                method: 'POST',
+                body: JSON.stringify(bookingPayload('pix_online'))
+            });
+            renderPayment(result);
+            await loadAvailability();
+        } catch (error) {
+            showToast(error.message);
+        }
+    });
+}
+
+if (el.bookingWhatsapp) {
+    el.bookingWhatsapp.addEventListener('click', () => {
+        try {
+            const servico = selectedAvailabilityService();
+            const url = whatsappUrl(servico, state.selectedSlot && state.selectedSlot.inicio, {
+                nome: el.bookingName.value || 'Cliente pelo site',
+                telefone: el.bookingPhone.value || 'nao informado'
+            });
+            if (!url) {
+                showToast('Configure WHATSAPP_BUSINESS_NUMBER no .env.');
+                return;
+            }
+            window.open(url, '_blank', 'noopener');
+        } catch (error) {
+            showToast(error.message);
+        }
+    });
 }
 
 if ('serviceWorker' in navigator) {

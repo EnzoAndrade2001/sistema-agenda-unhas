@@ -72,6 +72,45 @@
                 <span><i class="dot unavailable"></i>Indisponivel</span>
             </div>
             <div id="availabilityGrid" class="availability-grid" aria-live="polite"></div>
+            <section id="bookingPanel" class="booking-panel" hidden>
+                <div class="section-head">
+                    <div>
+                        <h2>Reservar horario</h2>
+                        <p id="bookingSummary">Escolha um horario livre.</p>
+                    </div>
+                </div>
+                <form id="bookingForm" class="booking-form">
+                    <label>
+                        Nome
+                        <input id="bookingName" type="text" maxlength="120" autocomplete="name" required>
+                    </label>
+                    <label>
+                        WhatsApp
+                        <input id="bookingPhone" type="tel" inputmode="tel" maxlength="30" autocomplete="tel" required>
+                    </label>
+                    <label>
+                        Email para Pix
+                        <input id="bookingEmail" type="email" maxlength="160" autocomplete="email" required>
+                    </label>
+                    <label>
+                        Pagamento
+                        <select id="bookingChargeType" required>
+                            <option value="sinal_30">Sinal 30%</option>
+                            <option value="sinal_50">Sinal 50%</option>
+                            <option value="total">Total no Pix</option>
+                        </select>
+                    </label>
+                    <label class="wide">
+                        Observacoes
+                        <textarea id="bookingNotes" rows="2" maxlength="1000" placeholder="Ex: formato, cor ou manutencao"></textarea>
+                    </label>
+                    <div class="booking-actions wide">
+                        <button class="primary-button" type="submit">Gerar QR Pix</button>
+                        <button id="bookingWhatsapp" class="secondary-button" type="button">Continuar no WhatsApp</button>
+                    </div>
+                </form>
+                <div id="paymentResult" class="payment-result" hidden></div>
+            </section>
         </section>
 
         <section class="services-section" id="servicos">

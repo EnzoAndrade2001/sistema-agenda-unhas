@@ -17,6 +17,7 @@ async function criar(req, res) {
     const cliente = await clientes.criar({
         nome: validacao.texto(req.body.nome, 'nome', { max: 120 }),
         telefone: validacao.telefone(req.body.telefone),
+        email: validacao.email(req.body.email),
         observacoes: validacao.texto(req.body.observacoes, 'observacoes', { obrigatorio: false, max: 1000 })
     });
     res.status(201).json(cliente);
@@ -26,6 +27,7 @@ async function atualizar(req, res) {
     const campos = {};
     if (req.body.nome !== undefined) campos.nome = validacao.texto(req.body.nome, 'nome', { max: 120 });
     if (req.body.telefone !== undefined) campos.telefone = validacao.telefone(req.body.telefone);
+    if (req.body.email !== undefined) campos.email = validacao.email(req.body.email);
     if (req.body.observacoes !== undefined) {
         campos.observacoes = validacao.texto(req.body.observacoes, 'observacoes', { obrigatorio: false, max: 1000 });
     }

@@ -55,4 +55,13 @@ function telefone(value) {
     return digitos;
 }
 
-module.exports = { texto, id, dinheiro, inteiro, data, telefone };
+function email(value, { obrigatorio = false } = {}) {
+    const normalizado = texto(value, 'email', { obrigatorio, max: 160 });
+    if (!normalizado) return null;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizado)) {
+        throw new HttpError(400, 'O email informado e invalido.');
+    }
+    return normalizado.toLowerCase();
+}
+
+module.exports = { texto, id, dinheiro, inteiro, data, telefone, email };

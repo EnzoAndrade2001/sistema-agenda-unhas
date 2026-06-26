@@ -48,7 +48,7 @@ async function atualizar(id, campos, db = pool) {
     return result.rows[0] || null;
 }
 
-async function sincronizarAgendamento(db, agendamentoId) {
+async function sincronizarAgendamento(db = pool, agendamentoId) {
     const result = await db.query(
         `SELECT
             COALESCE(SUM(valor) FILTER (WHERE status = 'pago'), 0)::float AS pago,

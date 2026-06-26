@@ -4,6 +4,7 @@ const servicos = require('../controllers/servicosController');
 const bloqueios = require('../controllers/bloqueiosController');
 const sistema = require('../controllers/sistemaController');
 const pagamentos = require('../controllers/pagamentosController');
+const publico = require('../controllers/publicoController');
 const adminAuth = require('../middleware/adminAuth');
 
 const router = express.Router();
@@ -37,6 +38,7 @@ router.delete('/bloqueios/:id', adminAuth.exigirAdmin, bloqueios.remover);
 router.post('/webhooks/mercado-pago', pagamentos.webhookMercadoPago);
 
 router.get('/publico', sistema.infoPublica);
+router.post('/publico/agendamentos', publico.agendar);
 router.get('/disponibilidade', sistema.disponibilidade);
 router.get('/disponibilidade/grade', sistema.gradeDisponibilidade);
 router.get('/lembretes/retorno', adminAuth.exigirAdmin, sistema.lembretesRetorno);

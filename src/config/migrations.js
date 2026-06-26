@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS clientes (
     id BIGSERIAL PRIMARY KEY,
     nome VARCHAR(120) NOT NULL,
     telefone VARCHAR(20) NOT NULL,
+    email VARCHAR(160),
     observacoes TEXT,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -13,6 +14,8 @@ CREATE TABLE IF NOT EXISTS clientes (
 
 CREATE UNIQUE INDEX IF NOT EXISTS clientes_telefone_ativo_idx
     ON clientes (telefone) WHERE ativo = TRUE;
+
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS email VARCHAR(160);
 
 CREATE TABLE IF NOT EXISTS servicos (
     id BIGSERIAL PRIMARY KEY,
