@@ -109,6 +109,18 @@ CREATE TABLE IF NOT EXISTS configuracoes (
 
 INSERT INTO configuracoes (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 
+UPDATE servicos
+SET nome = 'Alongamento em fibra',
+    descricao = 'Aplicacao completa de alongamento em fibra.',
+    categoria = 'Alongamento',
+    duracao_minutos = 180,
+    preco = 180.00,
+    atualizado_em = NOW()
+WHERE LOWER(nome) = 'alongamento fibra de vidro'
+  AND NOT EXISTS (
+      SELECT 1 FROM servicos s WHERE LOWER(s.nome) = 'alongamento em fibra'
+  );
+
 INSERT INTO servicos (nome, descricao, categoria, duracao_minutos, preco)
 SELECT * FROM (VALUES
     ('Manicure simples', 'Corte, lixamento, cuticula e esmaltacao comum.', 'Maos', 60, 45.00),
@@ -117,7 +129,8 @@ SELECT * FROM (VALUES
     ('Esmaltacao em gel', 'Esmaltacao em gel com acabamento duradouro.', 'Gel', 90, 80.00),
     ('Blindagem', 'Camada de protecao para fortalecer a unha natural.', 'Tratamento', 90, 95.00),
     ('Banho de gel', 'Estruturacao leve em gel sobre a unha natural.', 'Gel', 120, 130.00),
-    ('Alongamento fibra de vidro', 'Aplicacao completa de alongamento em fibra.', 'Alongamento', 180, 180.00),
+    ('Alongamento molde F1', 'Alongamento com molde F1 para formato uniforme e acabamento natural.', 'Alongamento', 180, 160.00),
+    ('Alongamento em fibra', 'Aplicacao completa de alongamento em fibra.', 'Alongamento', 180, 180.00),
     ('Manutencao de alongamento', 'Manutencao periodica do alongamento.', 'Alongamento', 150, 130.00),
     ('Nail art simples', 'Detalhes simples em ate duas unhas.', 'Decoracao', 30, 20.00),
     ('Nail art elaborada', 'Decoracao personalizada com maior nivel de detalhe.', 'Decoracao', 60, 45.00)
