@@ -35,15 +35,15 @@
             </div>
             <div class="lookbook-grid">
                 <figure class="lookbook-card">
-                    <img src="/lookbook-1.svg" alt="Unhas rosadas com acabamento brilhante" loading="lazy">
+                    <img src="/lookbook-1.svg?v=2" alt="Unhas rosadas com acabamento brilhante">
                     <figcaption>Gel delicado</figcaption>
                 </figure>
                 <figure class="lookbook-card featured">
-                    <img src="/lookbook-2.svg" alt="Detalhe de esmaltes e unhas decoradas" loading="lazy">
+                    <img src="/lookbook-2.svg?v=2" alt="Detalhe de esmaltes e unhas decoradas">
                     <figcaption>Alongamento e formato</figcaption>
                 </figure>
                 <figure class="lookbook-card">
-                    <img src="/lookbook-3.svg" alt="Unhas decoradas em tons claros" loading="lazy">
+                    <img src="/lookbook-3.svg?v=2" alt="Unhas decoradas em tons claros">
                     <figcaption>Decoracao suave</figcaption>
                 </figure>
             </div>
@@ -90,8 +90,17 @@
                         <input id="bookingPhone" type="tel" inputmode="tel" maxlength="30" autocomplete="tel" required>
                     </label>
                     <label>
-                        Email para Pix
+                        Email para pagamento online
                         <input id="bookingEmail" type="email" maxlength="160" autocomplete="email" required>
+                    </label>
+                    <label>
+                        Metodo de pagamento
+                        <select id="bookingPaymentMethod" required>
+                            <option value="pix_online">Pix online</option>
+                            <option value="cartao_online">Cartao online</option>
+                            <option value="pix_manual">Pix manual na hora</option>
+                            <option value="dinheiro">Dinheiro na hora</option>
+                        </select>
                     </label>
                     <label>
                         Pagamento

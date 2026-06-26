@@ -6,6 +6,7 @@ const { HttpError } = require('./utils/httpError');
 function createApp() {
     const app = express();
     const adminPath = process.env.ADMIN_PATH || '/admin';
+    const publicDir = path.join(__dirname, '..', 'public');
     app.disable('x-powered-by');
     app.use(express.json({ limit: '100kb' }));
     app.use((req, res, next) => {
@@ -19,12 +20,19 @@ function createApp() {
     });
 
     app.get('/admin.html', (req, res) => res.status(404).send('Not found'));
-    app.get(adminPath, (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'admin.html')));
+    app.get('/app.js', (req, res) => {
+        res.set('Cache-Control', 'no-store');
+        res.sendFile(path.join(publicDir, 'app.js'));
+    });
+    app.get(adminPath, (req, res) => {
+        res.set('Cache-Control', 'no-store');
+        res.sendFile(path.join(publicDir, 'admin.html'));
+    });
     if (adminPath !== '/admin') {
         app.get('/admin', (req, res) => res.status(404).send('Not found'));
     }
-    app.use(express.static(path.join(__dirname, '..', 'public')));
-    app.get('/servicos', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
+    app.use(express.static(publicDir));
+    app.get('/servicos', (req, res) => res.sendFile(path.join(publicDir, 'index.html')));
     app.get('/api', (req, res) => res.json({
         endpoints: [
             '/api/clientes', '/api/servicos', '/api/agendamentos',

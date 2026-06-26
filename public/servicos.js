@@ -26,6 +26,7 @@ const el = {
     bookingName: document.querySelector('#bookingName'),
     bookingPhone: document.querySelector('#bookingPhone'),
     bookingEmail: document.querySelector('#bookingEmail'),
+    bookingPaymentMethod: document.querySelector('#bookingPaymentMethod'),
     bookingChargeType: document.querySelector('#bookingChargeType'),
     bookingNotes: document.querySelector('#bookingNotes'),
     bookingWhatsapp: document.querySelector('#bookingWhatsapp'),
@@ -99,6 +100,15 @@ function option(value, label) {
     return node;
 }
 
+function metodoLabel(value) {
+    return ({
+        pix_online: 'Pix online',
+        cartao_online: 'Cartao online',
+        pix_manual: 'Pix manual na hora',
+        dinheiro: 'Dinheiro na hora'
+    })[value] || value;
+}
+
 function renderHeroAction() {
     const url = whatsappUrl();
     if (!url) {
@@ -118,6 +128,38 @@ function renderHeroAction() {
         el.bottomWhatsapp.target = '_blank';
         el.bottomWhatsapp.rel = 'noopener';
     }
+}
+
+function metodoOnline() {
+    return ['pix_online', 'cartao_online'].includes(el.bookingPaymentMethod.value);
+}
+
+function updateBookingModeUI() {
+    if (!el.bookingForm) return;
+    const metodo = el.bookingPaymentMethod.value;
+    const submitButton = el.bookingForm.querySelector('button[type="submit"]');
+    const online = metodoOnline();
+    el.bookingEmail.required = online;
+    el.bookingChargeType.disabled = !online;
+    if (!online) el.bookingChargeType.value = 'sinal_30';
+    submitButton.textContent = ({
+        pix_online: 'Gerar QR Pix',
+        cartao_online: 'Abrir pagamento com cartao',
+        pix_manual: 'Reservar horario',
+        dinheiro: 'Reservar horario'
+    })[metodo] || 'Reservar horario';
+    submitButton.disabled = online && !state.setup.mercado_pago_configurado;
+    el.bookingWhatsapp.disabled = !state.whatsapp;
+
+    const avisos = [];
+    if (online && !state.setup.mercado_pago_configurado) {
+        avisos.push('Mercado Pago ainda nao configurado para pagamento online.');
+    }
+    if (!state.whatsapp) {
+        avisos.push('WhatsApp sera liberado quando o numero da Karina entrar no .env.');
+    }
+    el.bookingSetupHint.hidden = !avisos.length;
+    el.bookingSetupHint.textContent = avisos.join(' ');
 }
 
 function renderSetupNotice() {
@@ -184,16 +226,7 @@ function selectSlot(slot) {
     el.bookingPanel.hidden = false;
     el.paymentResult.hidden = true;
     el.paymentResult.replaceChildren();
-    const pixDisponivel = state.setup.pix_disponivel;
-    const whatsappDisponivel = Boolean(state.whatsapp);
-    const submitButton = el.bookingForm.querySelector('button[type="submit"]');
-    submitButton.disabled = !pixDisponivel;
-    el.bookingWhatsapp.disabled = !whatsappDisponivel;
-    const avisos = [];
-    if (!pixDisponivel) avisos.push('QR Pix sera liberado quando o token do Mercado Pago for configurado.');
-    if (!whatsappDisponivel) avisos.push('WhatsApp sera liberado quando o numero da Karina entrar no .env.');
-    el.bookingSetupHint.hidden = !avisos.length;
-    el.bookingSetupHint.textContent = avisos.join(' ');
+    updateBookingModeUI();
     el.bookingPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -238,13 +271,13 @@ function bookingPayload(metodo) {
         email: el.bookingEmail.value,
         servico_id: el.availabilityService.value,
         inicio: state.selectedSlot.inicio,
-        tipo_cobranca: metodo === 'pix_online' ? el.bookingChargeType.value : 'pagar_na_hora',
+        tipo_cobranca: metodoOnline() ? el.bookingChargeType.value : 'pagar_na_hora',
         metodo_pagamento_preferido: metodo,
         observacoes: el.bookingNotes.value
     };
 }
 
-function renderPayment(result) {
+function renderPixPayment(result) {
     const pix = result.pagamento && result.pagamento.pix;
     if (!pix || !pix.qr_code) {
         showToast('Agendamento criado, mas o QR Pix nao retornou.');
@@ -267,6 +300,33 @@ function renderPayment(result) {
     });
 }
 
+function renderCardPayment(result) {
+    const pagamento = result.pagamento || {};
+    const checkoutUrl = pagamento.checkout_url || pagamento.sandbox_checkout_url;
+    if (!checkoutUrl) {
+        showToast('Agendamento criado, mas o link de pagamento nao retornou.');
+        return;
+    }
+    el.paymentResult.hidden = false;
+    el.paymentResult.innerHTML = `
+        <div>
+            <strong>Pagamento com cartao pronto</strong>
+            <p>Horario reservado. Abra o checkout para concluir o pagamento online.</p>
+        </div>
+        <a class="primary-button payment-link" href="${checkoutUrl}" target="_blank" rel="noopener">Ir para o pagamento</a>
+    `;
+}
+
+function renderManualReservation(result) {
+    el.paymentResult.hidden = false;
+    el.paymentResult.innerHTML = `
+        <div>
+            <strong>Horario reservado</strong>
+            <p>Reserva criada com pagamento em ${escapeHtml(metodoLabel(el.bookingPaymentMethod.value).toLowerCase())}.</p>
+        </div>
+    `;
+}
+
 async function init() {
     try {
         const [info, servicos] = await Promise.all([
@@ -281,6 +341,7 @@ async function init() {
         renderHeroAction();
         renderServices();
         renderAvailabilitySelect();
+        updateBookingModeUI();
         if (state.servicos.length) {
             el.availabilityService.value = state.servicos[0].id;
             await loadAvailability();
@@ -302,21 +363,28 @@ if (el.availabilityForm) {
 if (el.bookingForm) {
     el.bookingForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        if (!state.setup.pix_disponivel) {
+        const metodo = el.bookingPaymentMethod.value;
+        if (metodoOnline() && !state.setup.mercado_pago_configurado) {
             showToast('Mercado Pago ainda nao configurado no .env.');
             return;
         }
         try {
             const result = await api('/api/publico/agendamentos', {
                 method: 'POST',
-                body: JSON.stringify(bookingPayload('pix_online'))
+                body: JSON.stringify(bookingPayload(metodo))
             });
-            renderPayment(result);
+            if (metodo === 'pix_online') renderPixPayment(result);
+            else if (metodo === 'cartao_online') renderCardPayment(result);
+            else renderManualReservation(result);
             await loadAvailability();
         } catch (error) {
             showToast(error.message);
         }
     });
+}
+
+if (el.bookingPaymentMethod) {
+    el.bookingPaymentMethod.addEventListener('change', updateBookingModeUI);
 }
 
 if (el.bookingWhatsapp) {
