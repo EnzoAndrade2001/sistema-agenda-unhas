@@ -1,7 +1,14 @@
 const state = {
     whatsapp: null,
     servicos: [],
-    selectedSlot: null
+    selectedSlot: null,
+    setup: {
+        whatsapp_configurado: false,
+        mercado_pago_configurado: false,
+        public_base_url_configurada: false,
+        public_base_url_https: false,
+        pix_disponivel: false
+    }
 };
 
 const el = {
@@ -12,6 +19,7 @@ const el = {
     availabilityDate: document.querySelector('#availabilityDate'),
     availabilityService: document.querySelector('#availabilityService'),
     availabilityGrid: document.querySelector('#availabilityGrid'),
+    publicSetupNotice: document.querySelector('#publicSetupNotice'),
     bookingPanel: document.querySelector('#bookingPanel'),
     bookingSummary: document.querySelector('#bookingSummary'),
     bookingForm: document.querySelector('#bookingForm'),
@@ -21,6 +29,7 @@ const el = {
     bookingChargeType: document.querySelector('#bookingChargeType'),
     bookingNotes: document.querySelector('#bookingNotes'),
     bookingWhatsapp: document.querySelector('#bookingWhatsapp'),
+    bookingSetupHint: document.querySelector('#bookingSetupHint'),
     paymentResult: document.querySelector('#paymentResult'),
     toast: document.querySelector('#toast')
 };
@@ -111,6 +120,18 @@ function renderHeroAction() {
     }
 }
 
+function renderSetupNotice() {
+    const pendencias = [];
+    if (!state.setup.whatsapp_configurado) pendencias.push('WhatsApp');
+    if (!state.setup.mercado_pago_configurado) pendencias.push('Mercado Pago');
+    if (!pendencias.length) {
+        el.publicSetupNotice.hidden = true;
+        return;
+    }
+    el.publicSetupNotice.hidden = false;
+    el.publicSetupNotice.textContent = `Integracoes em configuracao: ${pendencias.join(' e ')}. O agendamento manual segue funcionando.`;
+}
+
 function serviceCard(servico) {
     const article = document.createElement('article');
     article.className = 'service-card';
@@ -163,6 +184,16 @@ function selectSlot(slot) {
     el.bookingPanel.hidden = false;
     el.paymentResult.hidden = true;
     el.paymentResult.replaceChildren();
+    const pixDisponivel = state.setup.pix_disponivel;
+    const whatsappDisponivel = Boolean(state.whatsapp);
+    const submitButton = el.bookingForm.querySelector('button[type="submit"]');
+    submitButton.disabled = !pixDisponivel;
+    el.bookingWhatsapp.disabled = !whatsappDisponivel;
+    const avisos = [];
+    if (!pixDisponivel) avisos.push('QR Pix sera liberado quando o token do Mercado Pago for configurado.');
+    if (!whatsappDisponivel) avisos.push('WhatsApp sera liberado quando o numero da Karina entrar no .env.');
+    el.bookingSetupHint.hidden = !avisos.length;
+    el.bookingSetupHint.textContent = avisos.join(' ');
     el.bookingPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -243,8 +274,10 @@ async function init() {
             api('/api/servicos')
         ]);
         state.whatsapp = info.whatsapp;
+        state.setup = info.setup || state.setup;
         state.servicos = servicos;
         el.availabilityDate.value = today();
+        renderSetupNotice();
         renderHeroAction();
         renderServices();
         renderAvailabilitySelect();
@@ -269,6 +302,10 @@ if (el.availabilityForm) {
 if (el.bookingForm) {
     el.bookingForm.addEventListener('submit', async (event) => {
         event.preventDefault();
+        if (!state.setup.pix_disponivel) {
+            showToast('Mercado Pago ainda nao configurado no .env.');
+            return;
+        }
         try {
             const result = await api('/api/publico/agendamentos', {
                 method: 'POST',

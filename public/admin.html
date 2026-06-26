@@ -78,6 +78,7 @@
                 <div><strong>R$ 0,00</strong><span>faturado</span></div>
                 <div><strong>0</strong><span>cancelados</span></div>
             </div>
+            <div id="setupChecklist" class="setup-checklist" hidden></div>
             <div id="appointmentsList" class="appointments-list" aria-live="polite"></div>
         </section>
 
@@ -142,6 +143,10 @@
                     <label>
                         Telefone
                         <input id="clientPhone" type="tel" inputmode="tel" maxlength="30" autocomplete="tel" required>
+                    </label>
+                    <label>
+                        Email
+                        <input id="clientEmail" type="email" maxlength="160" autocomplete="email">
                     </label>
                     <button class="secondary-button wide" type="submit">Salvar cliente</button>
                 </form>

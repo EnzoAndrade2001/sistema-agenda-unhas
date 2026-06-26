@@ -4,6 +4,7 @@ const state = {
     agendamentos: [],
     resumo: null,
     lembretes: [],
+    setup: null,
     adminProtegido: false
 };
 
@@ -26,6 +27,7 @@ const el = {
     clientForm: document.querySelector('#clientForm'),
     clientName: document.querySelector('#clientName'),
     clientPhone: document.querySelector('#clientPhone'),
+    clientEmail: document.querySelector('#clientEmail'),
     serviceForm: document.querySelector('#serviceForm'),
     serviceName: document.querySelector('#serviceName'),
     serviceDuration: document.querySelector('#serviceDuration'),
@@ -52,6 +54,7 @@ const el = {
     notificationCount: document.querySelector('#notificationCount'),
     notificationPanel: document.querySelector('#notificationPanel'),
     notificationList: document.querySelector('#notificationList'),
+    setupChecklist: document.querySelector('#setupChecklist'),
     toast: document.querySelector('#toast')
 };
 
@@ -332,6 +335,40 @@ function renderNotifications() {
     }));
 }
 
+function renderSetupChecklist() {
+    if (!el.setupChecklist || !state.setup) return;
+    const itens = [
+        {
+            pronto: Boolean(state.setup.whatsapp_configurado),
+            label: 'WhatsApp Business'
+        },
+        {
+            pronto: Boolean(state.setup.mercado_pago_configurado),
+            label: 'Mercado Pago token'
+        },
+        {
+            pronto: Boolean(state.setup.public_base_url_configurada),
+            label: 'PUBLIC_BASE_URL'
+        },
+        {
+            pronto: Boolean(state.setup.public_base_url_https),
+            label: 'PUBLIC_BASE_URL com HTTPS'
+        }
+    ];
+    const pendentes = itens.filter((item) => !item.pronto);
+    if (!pendentes.length) {
+        el.setupChecklist.hidden = true;
+        return;
+    }
+    el.setupChecklist.hidden = false;
+    el.setupChecklist.innerHTML = `
+        <strong>Configuracao pendente</strong>
+        <div class="setup-checklist-items">
+            ${itens.map((item) => `<span class="setup-pill ${item.pronto ? 'ok' : 'pending'}">${item.pronto ? 'ok' : 'pendente'} - ${escapeHtml(item.label)}</span>`).join('')}
+        </div>
+    `;
+}
+
 async function resolveReminder(id) {
     try {
         await api(`/api/agendamentos/${id}`, {
@@ -467,13 +504,16 @@ async function loadDay() {
 }
 
 async function loadBaseData() {
-    const [clientes, servicos] = await Promise.all([
+    const [clientes, servicos, publico] = await Promise.all([
         api('/api/clientes'),
-        api('/api/servicos')
+        api('/api/servicos'),
+        api('/api/publico')
     ]);
     state.clientes = clientes;
     state.servicos = servicos;
+    state.setup = publico.setup || null;
     renderSelects();
+    renderSetupChecklist();
 }
 
 async function refreshAll() {
@@ -574,7 +614,8 @@ el.clientForm.addEventListener('submit', async (event) => {
             method: 'POST',
             body: JSON.stringify({
                 nome: el.clientName.value,
-                telefone: el.clientPhone.value
+                telefone: el.clientPhone.value,
+                email: el.clientEmail.value
             })
         });
         el.clientForm.reset();

@@ -15,10 +15,20 @@ function dataLocal(value) {
 }
 
 async function infoPublica(req, res) {
+    const whatsapp = process.env.WHATSAPP_BUSINESS_NUMBER || null;
+    const publicBaseUrl = process.env.PUBLIC_BASE_URL || null;
+    const mercadoPagoConfigurado = Boolean(process.env.MERCADO_PAGO_ACCESS_TOKEN);
     res.json({
         nome: 'Nails by Karina',
         subtitulo: 'Unhas com cuidado, beleza e horario marcado.',
-        whatsapp: process.env.WHATSAPP_BUSINESS_NUMBER || null
+        whatsapp,
+        setup: {
+            whatsapp_configurado: Boolean(whatsapp),
+            mercado_pago_configurado: mercadoPagoConfigurado,
+            public_base_url_configurada: Boolean(publicBaseUrl),
+            public_base_url_https: Boolean(publicBaseUrl && publicBaseUrl.startsWith('https://')),
+            pix_disponivel: mercadoPagoConfigurado
+        }
     });
 }
 

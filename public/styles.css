@@ -652,6 +652,52 @@ label {
     text-align: center;
 }
 
+.setup-banner,
+.setup-checklist {
+    margin-bottom: 16px;
+    border: 1px solid #f0d7b0;
+    border-radius: 8px;
+    background: #fff7e7;
+    color: #765622;
+    padding: 12px 14px;
+}
+
+.setup-hint {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.setup-checklist strong {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--brand-dark);
+}
+
+.setup-checklist-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.setup-pill {
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.setup-pill.ok {
+    background: #e8f5ed;
+    color: #2b6a48;
+}
+
+.setup-pill.pending {
+    background: #fff2cc;
+    color: #7a5a00;
+}
+
 .hero-content {
     align-self: center;
     max-width: 760px;
